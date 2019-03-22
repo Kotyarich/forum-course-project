@@ -18,7 +18,7 @@ func main() {
 	routes.SetUserRouter(router)
 
 	server := http.Server{
-		Addr:    ":5001",
+		Addr:    ":5000",
 		Handler: router,
 	}
 

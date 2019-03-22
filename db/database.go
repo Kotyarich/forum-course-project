@@ -9,7 +9,7 @@ import (
 var db *sql.DB
 
 func init() {
-	connStr := "host=127.0.0.1 port=5432 user=docker password='docker' dbname=docker sslmode=disable"
+	connStr := "host=127.0.0.1 user=role1 password='12345' dbname=docker sslmode=disable"
 
 	var err error
 	db, err = sql.Open("postgres", connStr)
