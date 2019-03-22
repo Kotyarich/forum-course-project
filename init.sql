@@ -47,25 +47,30 @@ CREATE TABLE posts
   message TEXT NOT NULL,
   parent INT DEFAULT 0,
   tid INT NOT NULL REFERENCES threads (id),
-  slug VARCHAR(32)
+  slug INTEGER[] NOT NULL,
+  rootId INT
 );
 
--- DROP TRIGGER IF EXISTS init_post_slug ON posts;
---
---
--- CREATE OR REPLACE FUNCTION init_post() RETURNS TRIGGER AS
--- $init_post_slug$
--- BEGIN
---   UPDATE posts
--- --   SET slug = concat(cast(new.parent AS TEXT), cast(posts.id AS TEXT))
---   SET slug = cast(parent AS TEXT)
---   WHERE id = TG_RELID;
---   RETURN new;
--- END;
--- $init_post_slug$
--- LANGUAGE plpgsql;
---
--- CREATE TRIGGER init_post_slug BEFORE INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE init_post();
+DROP TRIGGER IF EXISTS add_root_id ON posts;
+
+CREATE OR REPLACE FUNCTION init_post() RETURNS TRIGGER AS
+$add_root_id$
+BEGIN
+  IF new.parent = 0 THEN
+    UPDATE posts
+    SET rootId = new.id
+    WHERE id = new.id;
+  ELSE
+    UPDATE posts
+    SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
+    WHERE id = NEW.id;
+  END IF;
+  RETURN new;
+END;
+$add_root_id$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER add_root_id AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE init_post();
 
 CREATE TABLE votes
 (

@@ -116,8 +116,10 @@ func createPost(post *models.Post, writer http.ResponseWriter, request *http.Req
 	if post.Created == "" {
 		post.Created = "1970-01-01T00:00:00.000Z"
 	}
-	err = db.QueryRow("INSERT INTO posts (author, forum, message, parent, tid, created) " +
-		"VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", post.Author, post.ForumName, post.Message,
+	err = db.QueryRow("INSERT INTO posts (author, forum, message, parent, tid, created, slug) " +
+		"VALUES ($1, $2, $3, $4, $5, $6, " +
+		"(SELECT slug FROM posts WHERE id = $4) || (SELECT currval('posts_id_seq')::integer)) " +
+		"RETURNING id", post.Author, post.ForumName, post.Message,
 		post.Parent, post.Tid, post.Created).Scan(&post.Id)
 	if err != nil {
 		http.Error(writer, err.Error(), 500)
@@ -276,9 +278,9 @@ func getTreePosts(input postsInput, writer http.ResponseWriter, r *http.Request)
 		" FROM posts WHERE tid = $1 "
 	if input.Since != ""{
 		if input.Desc {
-			query += "AND id < " + input.Since + " "
+			query += "AND slug < (SELECT slug FROM posts WHERE id = " + input.Since + ") "
 		} else {
-			query += "AND id > " + input.Since + " "
+			query += "AND slug > (SELECT slug FROM posts WHERE id = " + input.Since + ") "
 		}
 	}
 	query += "ORDER BY slug "
@@ -322,30 +324,35 @@ func getTreePosts(input postsInput, writer http.ResponseWriter, r *http.Request)
 func getParentTreePosts(input postsInput, writer http.ResponseWriter, r *http.Request) error {
 	db := db2.GetDB()
 
-	query := "SELECT id, author, created, forum, isEdited, message, parent, tid " +
-		"FROM posts WHERE tid = $1 AND parent = 0 "
-	if input.Since != ""{
-		if input.Desc {
-			query += "AND id < '" + input.Since + "' "
-		} else {
-			query += "AND id > '" + input.Since + "' "
-		}
-	}
-	query += "ORDER BY id "
-	if input.Desc {
-		query += "DESC "
-	}
+	query := "WITH roots AS ( " +
+		"SELECT id FROM posts WHERE tid = $1 AND parent = 0 "
+		//"SELECT id, author, created, forum, isEdited, message, parent, tid " +
+		//"FROM posts WHERE tid = $1 AND parent = 0 "
 	if limit := r.FormValue("limit"); limit != "" {
 		query += "LIMIT " + limit + " "
 	}
+	query += ") SELECT posts.id, author, created, forum, isEdited, message, parent, tid " +
+		"FROM posts JOIN roots ON roots.id = rootId "
+	if input.Since != ""{
+		if input.Desc {
+			query += "AND posts.id < " + input.Since + " "
+		} else {
+			query += "AND posts.id > " + input.Since + " "
+		}
+	}
+	query += "ORDER BY rootId"
+	if input.Desc {
+		query += " DESC"
+	}
+	query += ", slug"
 
 	rows, err := db.Query(query, input.Id)
 	if err != nil {
+		fmt.Println(err)
 		http.Error(writer, err.Error(), 500)
 		return err
 	}
 
-	input.Desc = false
 	result := []byte("[ ")
 	for rows.Next() {
 		if len(result) > 2 {
@@ -353,6 +360,7 @@ func getParentTreePosts(input postsInput, writer http.ResponseWriter, r *http.Re
 		}
 
 		post := models.Post{}
+		//slug := ""
 		err = rows.Scan(&post.Id, &post.Author, &post.Created, &post.ForumName,
 			&post.IsEdited, &post.Message, &post.Parent, &post.Tid)
 		if err != nil {
@@ -362,14 +370,6 @@ func getParentTreePosts(input postsInput, writer http.ResponseWriter, r *http.Re
 
 		data, _ := json.Marshal(post)
 		result = append(result, data...)
-		input.ParentId = post.Id
-		childs, err := getChilPosts(input, writer, r)
-		if err != nil {
-			http.Error(writer, err.Error(), 500)
-			return err
-		}
-
-		result = append(result, childs...)
 	}
 	result = append(result, ']')
 
@@ -454,5 +454,3 @@ func getPosts(writer http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
-
-//[ {"author":"usui.zRkKv06BxPMMrD","created":"1970-01-01T03:00:00+03:00","forum":"TXo3216_u86-K2","id":113,"isEdited":false,"message":"Repleo ad persequi nos, vocant sequatur. Spes ideo curam dei ne olent scit indicatae lapsus genere credidi. Deo ob ago nimis an saeculi tam calamitas stilo ea ei de fui hi contristentur tua ait. Est det ardes eo per das iubes nemo qua in da. Satietas recordationis confiteor utimur enim magna tremorem. Vel solo detestetur re iaceat, sat sub ubi. Eo his en et die agro percussisti latinae obliviscar volo aliud novum meo nuntii diu uterque mei fallax solitis. Quandoquidem spernat interiore. Pugno cuncta plenis nepotibus igitur os nec lux ita naturam sensum fui.","parent":0,"thread":83}{"author":"usui.zRkKv06BxPMMrD","created":"1970-01-01T03:00:00+03:00","forum":"TXo3216_u86-K2","id":118,"isEdited":false,"message":"Memoriam caelo numerorum ei his eo abs, ob non e o alteram adiungit. Vigilans factum abigo transit, deo suo aliqua fulget reconciliare nam fui lucerna lascivos erat cor carneo. Supra in egenus posita, eo. Sum firma eris servitutem vae iugo lene deseri faciente placuit teneat solus violis singula modo. Aestimanda absconditi te a petimus audis voluptates eius aliquod curo occurro. Tum alienorum augendo emendicata eis, incolis auris amandum malum mel scis thesaurus.","parent":113,"thread":83},{"author":"usui.zRkKv06BxPMMrD","created":"1970-01-01T03:00:00+03:00","forum":"TXo3216_u86-K2","id":120,"isEdited":false,"message":"Interfui niteat moveri aditu. Vox eo audeo amaritudo, exclamaverunt innumerabilia ibi. Lumen illi est sed ei at fudi probet quaerentes, e gaudeat mortui vae vis quaerentes proprie. Corporalium dicerem bibendi tu vi eris horum requiratur soli. Contexo cogitationis tametsi at eo volito nihil dicatur consulerem edacitas. Me hae lene solo det adhibemus veni ineffabiles tribuere laetitia amat os des nati indecens tu, voce me. An propositi es antris exterioris delectatio. Mei ebrietas es. Tu pervenire numeramus simillimum ei es tum haec talium veritatem dari numquid est. Cui stupor de at cogeremur tu artificiosas cor fidem et, transcendi an salutem amant si recondidi es esau. Cum stet tibi rationi timuisse mel.","parent":113,"thread":83},{"author":"usui.zRkKv06BxPMMrD","created":"1970-01-01T03:00:00+03:00","forum":"TXo3216_u86-K2","id
