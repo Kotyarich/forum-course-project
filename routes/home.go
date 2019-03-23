@@ -11,5 +11,5 @@ func SetHomeRouter(router *mux.Router) {
 }
 
 func homeHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("hi /")
+	fmt.Println("hi /home")
 }

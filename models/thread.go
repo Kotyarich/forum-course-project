@@ -19,3 +19,8 @@ type ThreadResult struct {
 	Id int `json:"id"`
 	Message string `json:"message"`
 }
+
+type ThreadUpdate struct {
+	Message string `json:"message"`
+	Title string `json:"title"`
+}

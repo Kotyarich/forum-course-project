@@ -24,11 +24,12 @@ func threadHandler(writer http.ResponseWriter, request *http.Request) {
 }
 
 func detailsHandler(writer http.ResponseWriter, request *http.Request) {
-	if request.Method == "GET" {
-		slug := mux.Vars(request)["slug"]
-		id, _ := strconv.Atoi(slug)
+	slug := mux.Vars(request)["slug"]
+	id, _ := strconv.Atoi(slug)
 
-		db := db2.GetDB()
+	db := db2.GetDB()
+
+	if request.Method == "GET" {
 		row := db.QueryRow("SELECT * " +
 			"FROM threads WHERE slug = $1 OR id = $2;", slug, id)
 
@@ -36,6 +37,54 @@ func detailsHandler(writer http.ResponseWriter, request *http.Request) {
 		err := row.Scan(&thread.Author, &thread.Created, &thread.ForumName, &thread.Id,
 			&thread.Message, &thread.Slug, &thread.Title, &thread.Votes)
 		if err != nil {
+			msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
+			utils.WriteData(writer, 404, msg)
+			return
+		}
+
+		data, err := json.Marshal(thread)
+		if err != nil {
+			http.Error(writer, err.Error(), 500)
+		}
+		utils.WriteData(writer, 200, data)
+	}
+	if request.Method == "POST" {
+		body, err := ioutil.ReadAll(request.Body)
+		defer request.Body.Close()
+		if err != nil {
+			http.Error(writer, err.Error(), 500)
+			return
+		}
+		// parse input
+		var input models.ThreadUpdate
+		err = json.Unmarshal(body, &input)
+		if err != nil {
+			http.Error(writer, err.Error(), 500)
+			return
+		}
+		// form query
+		var query string
+		if input.Message != "" && input.Title != "" {
+			query = fmt.Sprintf(`UPDATE threads 
+				SET message = '%s', title = '%s' WHERE id = $1 OR slug = $2 RETURNING *`,
+				input.Message, input.Title)
+		} else if input.Message == "" {
+			query = fmt.Sprintf(`UPDATE threads 
+				SET title = '%s' WHERE id = $1 OR slug = $2 RETURNING *`, input.Title)
+		} else if input.Title == "" {
+			query = fmt.Sprintf(`UPDATE threads 
+				SET message = '%s' WHERE id = $1 OR slug = $2 RETURNING *`, input.Message)
+		} else {
+			query = `SELECT * FROM threads WHERE id = $1 OR slug = $2`
+		}
+
+		row := db.QueryRow(query, id, slug)
+
+		var thread models.Thread
+		err = row.Scan(&thread.Author, &thread.Created, &thread.ForumName, &thread.Id,
+			&thread.Message, &thread.Slug, &thread.Title, &thread.Votes)
+		if err != nil {
+			fmt.Println(err)
 			msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
 			utils.WriteData(writer, 404, msg)
 			return
@@ -326,25 +375,29 @@ func getParentTreePosts(input postsInput, writer http.ResponseWriter, r *http.Re
 
 	query := "WITH roots AS ( " +
 		"SELECT id FROM posts WHERE tid = $1 AND parent = 0 "
-		//"SELECT id, author, created, forum, isEdited, message, parent, tid " +
-		//"FROM posts WHERE tid = $1 AND parent = 0 "
-	if limit := r.FormValue("limit"); limit != "" {
-		query += "LIMIT " + limit + " "
-	}
-	query += ") SELECT posts.id, author, created, forum, isEdited, message, parent, tid " +
-		"FROM posts JOIN roots ON roots.id = rootId "
 	if input.Since != ""{
 		if input.Desc {
-			query += "AND posts.id < " + input.Since + " "
+			query += "AND id < (SELECT rootId FROM posts WHERE id = " + input.Since + ") "
 		} else {
-			query += "AND posts.id > " + input.Since + " "
+			query += "AND id > (SELECT rootId FROM posts WHERE id = " + input.Since + ") "
 		}
 	}
-	query += "ORDER BY rootId"
+	query += "ORDER BY id"
 	if input.Desc {
 		query += " DESC"
 	}
-	query += ", slug"
+	if limit := r.FormValue("limit"); limit != "" {
+		query += " LIMIT " + limit + " "
+	}
+	query += ") SELECT posts.id, author, created, forum, isEdited, message, parent, tid " +
+		"FROM posts JOIN roots ON roots.id = rootId "
+
+	query += "ORDER BY "
+	if input.Desc {
+		query += " rootId DESC, slug"
+	} else {
+		query += " slug"
+	}
 
 	rows, err := db.Query(query, input.Id)
 	if err != nil {
@@ -377,6 +430,7 @@ func getParentTreePosts(input postsInput, writer http.ResponseWriter, r *http.Re
 	return nil
 }
 
+// Not neded any more, but let it be here
 func getChilPosts(input postsInput, writer http.ResponseWriter, request *http.Request) ([]byte, error) {
 	db := db2.GetDB()
 
@@ -422,7 +476,6 @@ func getChilPosts(input postsInput, writer http.ResponseWriter, request *http.Re
 
 	return result, nil
 }
-
 
 func getPosts(writer http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {

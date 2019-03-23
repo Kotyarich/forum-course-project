@@ -16,7 +16,7 @@ func SetForumRouter(router *mux.Router) {
 	router.HandleFunc("/api/forum/{slug}/create", slugCreateHandler)
 	router.HandleFunc("/api/forum/{slug}/details", getForum)
 	router.HandleFunc("/api/forum/{slug}/threads", getThreads)
-	router.HandleFunc("/api/forum/{slug}/{type}", slugHandler)
+	router.HandleFunc("/api/forum/{slug}/users", getUsers)
 }
 
 func createHandler(writer http.ResponseWriter, request *http.Request) {
@@ -63,13 +63,6 @@ func createHandler(writer http.ResponseWriter, request *http.Request) {
 
 		data, _ := json.Marshal(f)
 		utils.WriteData(writer, 409, data)
-	}
-}
-
-func slugHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("hi /forum")
-	if request.Method == "POST" {
-		//
 	}
 }
 
@@ -143,6 +136,7 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request) {
 			err = row.Scan(&thr.Author, &thr.Created, &thr.ForumName, &thr.Id,
 				&thr.Message, &thr.Slug, &thr.Title, &thr.Votes)
 			if err != nil {
+				fmt.Println(err)
 				http.Error(writer, err.Error(), 500)
 				return
 			}
@@ -173,6 +167,69 @@ func getForum(writer http.ResponseWriter, r *http.Request) {
 			http.Error(writer, err.Error(), 500)
 		}
 		utils.WriteData(writer, 200, data)
+	}
+}
+
+func getUsers(writer http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		slug := mux.Vars(r)["slug"]
+		// check if forum exist
+		db := db2.GetDB()
+		var forum models.Forum
+		err := db.QueryRow("SELECT slug FROM forums WHERE slug = $1", slug).Scan(&forum.Slug)
+		if err != nil {
+			msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
+			utils.WriteData(writer, 404, msg)
+			return
+		}
+		// TODO use forum's id
+		// Form query. It' important to use fUser instead of nickname here, because
+		// fUser's collation is overwrite to compare symbols like '-' or '.' correctly
+		query := `SELECT about, email, fullname, fUser 
+					FROM users JOIN forum_users ON fUser = nickname AND forum = $1 `
+
+		since := r.FormValue("since")
+		sort := r.FormValue("desc")
+		if since != ""{
+			if sort == "true" {
+				query += "AND fUser < '" + since + "' "
+			} else {
+				query += "AND fUser > '" + since + "' "
+			}
+		}
+		query += "ORDER BY fUser "
+		if sort != "" && sort != "false" {
+			query += "DESC "
+		}
+		if limit := r.FormValue("limit"); limit != "" {
+			query += "LIMIT " + limit + " "
+		}
+
+		rows, err := db.Query(query, slug)
+		if err != nil {
+			http.Error(writer, err.Error(), 500)
+			return
+		}
+
+		result := []byte("[ ")
+		for rows.Next() {
+			if len(result) > 2 {
+				result = append(result, ',')
+			}
+
+			usr := models.User{}
+			err = rows.Scan(&usr.About, &usr.Email, &usr.Fullname, &usr.Nickname)
+			if err != nil {
+				http.Error(writer, err.Error(), 500)
+				return
+			}
+
+			data, _ := json.Marshal(usr)
+			result = append(result, data...)
+		}
+		result = append(result, ']')
+
+		utils.WriteData(writer, 200, result)
 	}
 }
 

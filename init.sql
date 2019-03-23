@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS forum_users;
 DROP TABLE IF EXISTS votes;
 DROP TABLE IF EXISTS posts;
 DROP TABLE IF EXISTS threads;
@@ -25,6 +26,15 @@ CREATE TABLE forums
   author CITEXT NOT NULL REFERENCES users (nickname)
 );
 
+CREATE TABLE forum_users
+(
+  fUser CITEXT COLLATE ucs_basic NOT NULL,
+  forum CITEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS f_users_ind ON forum_users (fUser, forum);
+
+-- TODO add forum's id
 CREATE TABLE threads
 (
   author CITEXT NOT NULL REFERENCES users (nickname),
@@ -51,27 +61,6 @@ CREATE TABLE posts
   rootId INT
 );
 
-DROP TRIGGER IF EXISTS add_root_id ON posts;
-
-CREATE OR REPLACE FUNCTION init_post() RETURNS TRIGGER AS
-$add_root_id$
-BEGIN
-  IF new.parent = 0 THEN
-    UPDATE posts
-    SET rootId = new.id
-    WHERE id = new.id;
-  ELSE
-    UPDATE posts
-    SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
-    WHERE id = NEW.id;
-  END IF;
-  RETURN new;
-END;
-$add_root_id$
-LANGUAGE plpgsql;
-
-CREATE TRIGGER add_root_id AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE init_post();
-
 CREATE TABLE votes
 (
   nickname CITEXT NOT NULL REFERENCES users (nickname),
@@ -83,6 +72,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS votes_ind ON votes (nickname, tid);
 
 DROP TRIGGER IF EXISTS vote_insertion ON votes;
 DROP TRIGGER IF EXISTS vote_updating ON votes;
+DROP TRIGGER IF EXISTS add_root_id ON posts;
+DROP TRIGGER IF EXISTS thread_insertion ON threads;
+DROP TRIGGER IF EXISTS post_insertion ON posts;
 
 CREATE OR REPLACE FUNCTION insert_vote() RETURNS TRIGGER AS
 $vote_insertion$
@@ -106,5 +98,58 @@ END;
 $vote_updating$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION init_post() RETURNS TRIGGER AS
+$add_root_id$
+BEGIN
+  IF new.parent = 0 THEN
+    UPDATE posts
+    SET rootId = new.id
+    WHERE id = new.id;
+  ELSE
+    UPDATE posts
+    SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
+    WHERE id = NEW.id;
+  END IF;
+  RETURN new;
+END;
+$add_root_id$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION inc_threads() RETURNS TRIGGER AS
+$thread_insertion$
+BEGIN
+  UPDATE forums
+  SET threads = threads + 1
+  WHERE slug = new.forum;
+  RETURN NEW;
+END;
+$thread_insertion$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION inc_posts() RETURNS TRIGGER AS
+$post_insertion$
+BEGIN
+  UPDATE forums
+  SET posts = posts + 1
+  WHERE slug = new.forum;
+  RETURN NEW;
+END;
+$post_insertion$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION add_forum_user() RETURNS TRIGGER AS
+$$
+BEGIN
+  INSERT INTO forum_users VALUES (new.author, new.forum) ON CONFLICT DO NOTHING;
+  RETURN new;
+END;
+$$
+LANGUAGE plpgsql;
+
 CREATE TRIGGER vote_updating BEFORE UPDATE ON votes FOR EACH ROW EXECUTE PROCEDURE update_vote();
 CREATE TRIGGER vote_insertion BEFORE INSERT ON votes FOR EACH ROW EXECUTE PROCEDURE insert_vote();
+CREATE TRIGGER add_root_id AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE init_post();
+CREATE TRIGGER thread_insertion AFTER INSERT ON threads FOR EACH ROW EXECUTE PROCEDURE inc_threads();
+CREATE TRIGGER post_insertion AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE inc_posts();
+CREATE TRIGGER new_post_author AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE add_forum_user();
+CREATE TRIGGER new_thread_author AFTER INSERT ON threads FOR EACH ROW EXECUTE PROCEDURE add_forum_user();
