@@ -3,12 +3,12 @@ package main
 import (
 	"dbProject/routes"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/dimfeld/httptreemux"
 	"net/http"
 )
 
 func main() {
-	router := mux.NewRouter()
+	router := httptreemux.New()
 
 	routes.SetHomeRouter(router)
 	routes.SetForumRouter(router)

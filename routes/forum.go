@@ -6,20 +6,20 @@ import (
 	"dbProject/utils"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/dimfeld/httptreemux"
 	"io/ioutil"
 	"net/http"
 )
 
-func SetForumRouter(router *mux.Router) {
-	router.HandleFunc("/api/forum/create", createHandler)
-	router.HandleFunc("/api/forum/{slug}/create", slugCreateHandler)
-	router.HandleFunc("/api/forum/{slug}/details", getForum)
-	router.HandleFunc("/api/forum/{slug}/threads", getThreads)
-	router.HandleFunc("/api/forum/{slug}/users", getUsers)
+func SetForumRouter(router *httptreemux.TreeMux) {
+	router.POST("/api/forum/:slug/create", slugCreateHandler)
+	router.GET("/api/forum/:slug/details", getForum)
+	router.GET("/api/forum/:slug/threads", getThreads)
+	router.GET("/api/forum/:slug/users", getUsers)
+	router.POST("/api/forum/create", createHandler)
 }
 
-func createHandler(writer http.ResponseWriter, request *http.Request) {
+func createHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	body, err := ioutil.ReadAll(request.Body)
 	defer request.Body.Close()
 	if err != nil {
@@ -31,10 +31,11 @@ func createHandler(writer http.ResponseWriter, request *http.Request) {
 	if err != nil {
 		http.Error(writer, err.Error(), 500)
 	}
-
+	// check user
 	db := db2.GetDB()
 	err = db.QueryRow("SELECT nickname " +
 		"FROM users WHERE nickname = $1", input.User).Scan(&input.User)
+
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
 		utils.WriteData(writer, 404, msg)
@@ -66,9 +67,9 @@ func createHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func slugCreateHandler(writer http.ResponseWriter, request *http.Request) {
+func slugCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	if request.Method == "POST" {
-		slug := mux.Vars(request)["slug"]
+		slug := ps["slug"]
 
 		body, err := ioutil.ReadAll(request.Body)
 		defer request.Body.Close()
@@ -81,10 +82,11 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request) {
 		if err != nil {
 			http.Error(writer, err.Error(), 500)
 		}
-
+		// check user
 		db := db2.GetDB()
-		err = db.QueryRow("SELECT nickname " +
-			"FROM users WHERE nickname = $1", thread.Author).Scan(&thread.Author)
+		row := db.QueryRow("SELECT nickname " +
+			"FROM users WHERE nickname = $1", thread.Author)
+		err = row.Scan(&thread.Author)
 		if err != nil {
 			msg, _ := json.Marshal(map[string]string{"message": "User not found"})
 			utils.WriteData(writer, 404, msg)
@@ -98,28 +100,17 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request) {
 			utils.WriteData(writer, 404, msg)
 			return
 		}
-		// AAAAAAAAAAAAAAAAA
-		if len(thread.Created) > 0 {
-			if len(thread.Slug) > 0 {
-				err = db.QueryRow("INSERT INTO threads (author, created, forum, message, title, slug) "+
-					"VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", thread.Author, thread.Created,
-					thread.ForumName, thread.Message, thread.Title, thread.Slug).Scan(&thread.Id)
-			} else {
-				err = db.QueryRow("INSERT INTO threads (author, created, forum, message, title) "+
-					"VALUES ($1, $2, $3, $4, $5) RETURNING id", thread.Author, thread.Created,
-					thread.ForumName, thread.Message, thread.Title).Scan(&thread.Id)
-			}
+
+		if thread.Slug != nil {
+			err = db.QueryRow("INSERT INTO threads (author, created, forum, message, title, slug) "+
+				"VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", thread.Author, thread.Created,
+				thread.ForumName, thread.Message, thread.Title, thread.Slug).Scan(&thread.Id)
 		} else {
-			if len(thread.Slug) > 0 {
-				err = db.QueryRow("INSERT INTO threads (author, forum, message, title, slug) "+
-					"VALUES ($1, $2, $3, $4, $5) RETURNING id", thread.Author,
-					thread.ForumName, thread.Message, thread.Title, thread.Slug).Scan(&thread.Id)
-			} else {
-				err = db.QueryRow("INSERT INTO threads (author, forum, message, title) "+
-					"VALUES ($1, $2, $3, $4) RETURNING id", thread.Author,
-					thread.ForumName, thread.Message, thread.Title).Scan(&thread.Id)
-			}
+			err = db.QueryRow("INSERT INTO threads (author, created, forum, message, title) "+
+				"VALUES ($1, $2, $3, $4, $5) RETURNING id", thread.Author, thread.Created,
+				thread.ForumName, thread.Message, thread.Title).Scan(&thread.Id)
 		}
+
 		if err == nil {
 			data, err := json.Marshal(thread)
 			if err != nil {
@@ -147,12 +138,12 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func getForum(writer http.ResponseWriter, r *http.Request) {
+func getForum(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
-		vars := mux.Vars(r)
+		slug := ps["slug"]
 		db := db2.GetDB()
 		row := db.QueryRow("SELECT posts, slug, threads, title, author " +
-			"FROM forums WHERE slug = $1", vars["slug"])
+			"FROM forums WHERE slug = $1", slug)
 
 		var forum models.Forum
 		err := row.Scan(&forum.Posts, &forum.Slug, &forum.Threads, &forum.Title, &forum.User)
@@ -170,9 +161,9 @@ func getForum(writer http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getUsers(writer http.ResponseWriter, r *http.Request) {
+func getUsers(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
-		slug := mux.Vars(r)["slug"]
+		slug := ps["slug"]
 		// check if forum exist
 		db := db2.GetDB()
 		var forum models.Forum
@@ -182,7 +173,7 @@ func getUsers(writer http.ResponseWriter, r *http.Request) {
 			utils.WriteData(writer, 404, msg)
 			return
 		}
-		// TODO use forum's id
+		// TODO use forum's id or not...
 		// Form query. It' important to use fUser instead of nickname here, because
 		// fUser's collation is overwrite to compare symbols like '-' or '.' correctly
 		query := `SELECT about, email, fullname, fUser 
@@ -206,6 +197,7 @@ func getUsers(writer http.ResponseWriter, r *http.Request) {
 		}
 
 		rows, err := db.Query(query, slug)
+		defer rows.Close()
 		if err != nil {
 			http.Error(writer, err.Error(), 500)
 			return
@@ -233,9 +225,9 @@ func getUsers(writer http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getThreads(writer http.ResponseWriter, r *http.Request) {
+func getThreads(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
-		slug := mux.Vars(r)["slug"]
+		slug := ps["slug"]
 		// check if forum exist
 		db := db2.GetDB()
 		var forum models.Forum
@@ -266,6 +258,7 @@ func getThreads(writer http.ResponseWriter, r *http.Request) {
 		}
 
 		rows, err := db.Query(query, slug)
+		defer rows.Close()
 		if err != nil {
 			http.Error(writer, err.Error(), 500)
 			return

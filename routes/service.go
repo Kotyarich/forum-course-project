@@ -1,20 +1,67 @@
 package routes
 
 import (
-	"fmt"
-	"github.com/gorilla/mux"
+	db2 "dbProject/db"
+	"dbProject/utils"
+	"encoding/json"
+	"github.com/dimfeld/httptreemux"
 	"net/http"
 )
 
-func SetServiceRouter(router *mux.Router) {
-	router.HandleFunc("/api/service/clear", clearHandler)
-	router.HandleFunc("/api/service/status", statusHandler)
+func SetServiceRouter(router *httptreemux.TreeMux) {
+	router.POST("/api/service/clear", clearHandler)
+	router.GET("/api/service/status", statusHandler)
 }
 
-func clearHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("hi /serve")
+func clearHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	db := db2.GetDB()
+	_, err := db.Exec(`
+			TRUNCATE TABLE forum_users, votes, posts, threads, forums, users 
+			  RESTART IDENTITY`)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+
+	writer.WriteHeader(200)
 }
 
-func statusHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("hi /serve")
+type dbStats struct {
+	Forums int `json:"forum"`
+	Posts int `json:"post"`
+	Threads int `json:"thread"`
+	Users int `json:"user"`
+}
+
+func statusHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	db := db2.GetDB()
+	var stats dbStats
+
+	err := db.QueryRow(`SELECT COUNT(*) FROM forums`).Scan(&stats.Forums)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+	err = db.QueryRow(`SELECT COUNT(*) FROM threads`).Scan(&stats.Threads)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+	err = db.QueryRow(`SELECT COUNT(*) FROM posts`).Scan(&stats.Posts)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+	err = db.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&stats.Users)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+
+	data, err := json.Marshal(stats)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+	utils.WriteData(writer, 200, data)
 }

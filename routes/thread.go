@@ -6,99 +6,100 @@ import (
 	"dbProject/utils"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/dimfeld/httptreemux"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 )
 
-func SetThreadRouter(router *mux.Router) {
-	router.HandleFunc("/api/thread/{slug}/create", threadCreateHandler)
-	router.HandleFunc("/api/thread/{slug}/details", detailsHandler)
-	router.HandleFunc("/api/thread/{slug}/posts", getPosts)
-	router.HandleFunc("/api/thread/{slug}/vote", threadVoteHandler)
+func SetThreadRouter(router *httptreemux.TreeMux) {
+	router.POST("/api/thread/:slug/create", threadCreateHandler)
+	router.GET("/api/thread/:slug/details", getDetailsHandler)
+	router.POST("/api/thread/:slug/details", postDetailsHandler)
+	router.GET("/api/thread/:slug/posts", getPosts)
+	router.POST("/api/thread/:slug/vote", threadVoteHandler)
 }
 
-func threadHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("hi /thread")
-}
-
-func detailsHandler(writer http.ResponseWriter, request *http.Request) {
-	slug := mux.Vars(request)["slug"]
+func getDetailsHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	slug := ps["slug"]
 	id, _ := strconv.Atoi(slug)
 
 	db := db2.GetDB()
 
-	if request.Method == "GET" {
-		row := db.QueryRow("SELECT * " +
-			"FROM threads WHERE slug = $1 OR id = $2;", slug, id)
+	row := db.QueryRow("SELECT * " +
+		"FROM threads WHERE slug = $1 OR id = $2;", slug, id)
 
-		var thread models.Thread
-		err := row.Scan(&thread.Author, &thread.Created, &thread.ForumName, &thread.Id,
-			&thread.Message, &thread.Slug, &thread.Title, &thread.Votes)
-		if err != nil {
-			msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-			utils.WriteData(writer, 404, msg)
-			return
-		}
-
-		data, err := json.Marshal(thread)
-		if err != nil {
-			http.Error(writer, err.Error(), 500)
-		}
-		utils.WriteData(writer, 200, data)
+	var thread models.Thread
+	err := row.Scan(&thread.Author, &thread.Created, &thread.ForumName, &thread.Id,
+		&thread.Message, &thread.Slug, &thread.Title, &thread.Votes)
+	if err != nil {
+		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
+		utils.WriteData(writer, 404, msg)
+		return
 	}
-	if request.Method == "POST" {
-		body, err := ioutil.ReadAll(request.Body)
-		defer request.Body.Close()
-		if err != nil {
-			http.Error(writer, err.Error(), 500)
-			return
-		}
-		// parse input
-		var input models.ThreadUpdate
-		err = json.Unmarshal(body, &input)
-		if err != nil {
-			http.Error(writer, err.Error(), 500)
-			return
-		}
-		// form query
-		var query string
-		if input.Message != "" && input.Title != "" {
-			query = fmt.Sprintf(`UPDATE threads 
-				SET message = '%s', title = '%s' WHERE id = $1 OR slug = $2 RETURNING *`,
-				input.Message, input.Title)
-		} else if input.Message == "" {
-			query = fmt.Sprintf(`UPDATE threads 
-				SET title = '%s' WHERE id = $1 OR slug = $2 RETURNING *`, input.Title)
-		} else if input.Title == "" {
-			query = fmt.Sprintf(`UPDATE threads 
-				SET message = '%s' WHERE id = $1 OR slug = $2 RETURNING *`, input.Message)
-		} else {
-			query = `SELECT * FROM threads WHERE id = $1 OR slug = $2`
-		}
 
-		row := db.QueryRow(query, id, slug)
-
-		var thread models.Thread
-		err = row.Scan(&thread.Author, &thread.Created, &thread.ForumName, &thread.Id,
-			&thread.Message, &thread.Slug, &thread.Title, &thread.Votes)
-		if err != nil {
-			fmt.Println(err)
-			msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-			utils.WriteData(writer, 404, msg)
-			return
-		}
-
-		data, err := json.Marshal(thread)
-		if err != nil {
-			http.Error(writer, err.Error(), 500)
-		}
-		utils.WriteData(writer, 200, data)
+	data, err := json.Marshal(thread)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
 	}
+	utils.WriteData(writer, 200, data)
 }
 
-func threadCreateHandler(writer http.ResponseWriter, request *http.Request) {
+func postDetailsHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	slug := ps["slug"]
+	id, _ := strconv.Atoi(slug)
+
+	db := db2.GetDB()
+
+	body, err := ioutil.ReadAll(request.Body)
+	defer request.Body.Close()
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+	// parse input
+	var input models.ThreadUpdate
+	err = json.Unmarshal(body, &input)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+		return
+	}
+	// form query
+	var query string
+	if input.Message == "" && input.Title == "" {
+		query = `SELECT * FROM threads WHERE id = $1 OR slug = $2`
+	} else if input.Message == "" {
+		query = fmt.Sprintf(`UPDATE threads 
+				SET title = '%s' WHERE id = $1 OR slug = $2 RETURNING *`, input.Title)
+	} else if input.Title == "" {
+		query = fmt.Sprintf(`UPDATE threads 
+				SET message = '%s' WHERE id = $1 OR slug = $2 RETURNING *`, input.Message)
+	} else {
+		query = fmt.Sprintf(`UPDATE threads 
+				SET message = '%s', title = '%s' WHERE id = $1 OR slug = $2 RETURNING *`,
+			input.Message, input.Title)
+	}
+
+	row := db.QueryRow(query, id, slug)
+
+	var thread models.Thread
+	err = row.Scan(&thread.Author, &thread.Created, &thread.ForumName, &thread.Id,
+		&thread.Message, &thread.Slug, &thread.Title, &thread.Votes)
+	if err != nil {
+		fmt.Println(err)
+		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
+		utils.WriteData(writer, 404, msg)
+		return
+	}
+
+	data, err := json.Marshal(thread)
+	if err != nil {
+		http.Error(writer, err.Error(), 500)
+	}
+	utils.WriteData(writer, 200, data)
+}
+
+func threadCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	body, err := ioutil.ReadAll(request.Body)
 	defer request.Body.Close()
 	if err != nil {
@@ -113,7 +114,22 @@ func threadCreateHandler(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	slug := ps["slug"]
+	tid, _ := strconv.Atoi(slug)
+	var post models.Post
+	db := db2.GetDB()
+	// check thread and get forum
+	err = db.QueryRow("SELECT id, forum " +
+		"FROM threads WHERE slug = $1 OR id = $2", slug, tid).Scan(&post.Tid, &post.ForumName)
+	if err != nil {
+		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
+		utils.WriteData(writer, 404, msg)
+		return
+	}
+
 	for i := 0; i < len(posts); i++ {
+		posts[i].Tid = post.Tid
+		posts[i].ForumName = post.ForumName
 		err = createPost(&posts[i], writer, request)
 		if err != nil {
 			break
@@ -132,22 +148,12 @@ func threadCreateHandler(writer http.ResponseWriter, request *http.Request) {
 }
 
 func createPost(post *models.Post, writer http.ResponseWriter, request *http.Request) error {
-	slug := mux.Vars(request)["slug"]
-	tid, _ := strconv.Atoi(slug)
 	db := db2.GetDB()
 	// check user
 	err := db.QueryRow("SELECT nickname " +
 		"FROM users WHERE nickname = $1", post.Author).Scan(&post.Author)
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		utils.WriteData(writer, 404, msg)
-		return err
-	}
-	// check thread and get forum
-	err = db.QueryRow("SELECT id, forum " +
-		"FROM threads WHERE slug = $1 OR id = $2", slug, tid).Scan(&post.Tid, &post.ForumName)
-	if err != nil {
-		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
 		utils.WriteData(writer, 404, msg)
 		return err
 	}
@@ -162,9 +168,7 @@ func createPost(post *models.Post, writer http.ResponseWriter, request *http.Req
 			return err
 		}
 	}
-	if post.Created == "" {
-		post.Created = "1970-01-01T00:00:00.000Z"
-	}
+
 	err = db.QueryRow("INSERT INTO posts (author, forum, message, parent, tid, created, slug) " +
 		"VALUES ($1, $2, $3, $4, $5, $6, " +
 		"(SELECT slug FROM posts WHERE id = $4) || (SELECT currval('posts_id_seq')::integer)) " +
@@ -192,8 +196,8 @@ func createPost(post *models.Post, writer http.ResponseWriter, request *http.Req
 	return nil
 }
 
-func threadVoteHandler(writer http.ResponseWriter, request *http.Request) {
-	slug := mux.Vars(request)["slug"]
+func threadVoteHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	slug := ps["slug"]
 	id, _ := strconv.Atoi(slug)
 
 	body, err := ioutil.ReadAll(request.Body)
@@ -214,7 +218,7 @@ func threadVoteHandler(writer http.ResponseWriter, request *http.Request) {
 	db := db2.GetDB()
 	transaction, _ := db.Begin()
 	// check thread and get forum
-	err = transaction.QueryRow("SELECT author, created, id, forum, message, slug, title, votes " +
+	err = transaction.QueryRow("SELECT author, created, id, forum, message, slug::text, title, votes " +
 		"FROM threads WHERE slug = $1 OR id = $2", slug, id).Scan(
 			&thread.Author, &thread.Created, &thread.Id, &thread.ForumName,
 			&thread.Message, &thread.Slug, &thread.Title, &thread.Votes)
@@ -225,20 +229,15 @@ func threadVoteHandler(writer http.ResponseWriter, request *http.Request) {
 		return
 	}
 	// create/update vote
-	rows, _ := transaction.Query("SELECT * FROM votes")
-	for rows.Next() {
-		var id int
-		var v models.Vote
-		rows.Scan(&v.Nickname, &id, &v.Voice)
-	}
 	r, err := transaction.Exec("UPDATE votes SET voice=$1 " +
 		"WHERE tid=$2 AND nickname=$3;", vote.Voice, thread.Id, vote.Nickname)
-	if count, _ := r.RowsAffected(); count == 0 {
+	if count:= r.RowsAffected(); count == 0 {
 		_, err := transaction.Exec("INSERT INTO votes (nickname, tid, voice)" +
 			"VALUES ($1, $2, $3);", vote.Nickname, thread.Id, vote.Voice)
 		if err != nil {
 			_ = transaction.Rollback()
-			http.Error(writer, err.Error(), 500)
+			msg, _ := json.Marshal(map[string]string{"message": "User not found"})
+			utils.WriteData(writer, 404, msg)
 			return
 		}
 	}
@@ -292,6 +291,7 @@ func getFlatPosts(input postsInput, writer http.ResponseWriter, r *http.Request)
 	}
 
 	rows, err := db.Query(query, input.Id)
+	defer rows.Close()
 	if err != nil {
 		http.Error(writer, err.Error(), 500)
 		return err
@@ -323,7 +323,7 @@ func getFlatPosts(input postsInput, writer http.ResponseWriter, r *http.Request)
 func getTreePosts(input postsInput, writer http.ResponseWriter, r *http.Request) error {
 	db := db2.GetDB()
 
-	query := "SELECT id, author, created, forum, isEdited, message, parent, tid, slug" +
+	query := "SELECT id, author, created, forum, isEdited, message, parent, tid" +
 		" FROM posts WHERE tid = $1 "
 	if input.Since != ""{
 		if input.Desc {
@@ -341,6 +341,7 @@ func getTreePosts(input postsInput, writer http.ResponseWriter, r *http.Request)
 	}
 
 	rows, err := db.Query(query, input.Id)
+	defer rows.Close()
 	if err != nil {
 		http.Error(writer, err.Error(), 500)
 		return err
@@ -353,9 +354,9 @@ func getTreePosts(input postsInput, writer http.ResponseWriter, r *http.Request)
 		}
 
 		post := models.Post{}
-		slug := ""
+		//slug := ""
 		err = rows.Scan(&post.Id, &post.Author, &post.Created, &post.ForumName,
-			&post.IsEdited, &post.Message, &post.Parent, &post.Tid, &slug)
+			&post.IsEdited, &post.Message, &post.Parent, &post.Tid)
 		if err != nil {
 			http.Error(writer, err.Error(), 500)
 			return err
@@ -400,8 +401,8 @@ func getParentTreePosts(input postsInput, writer http.ResponseWriter, r *http.Re
 	}
 
 	rows, err := db.Query(query, input.Id)
+	defer rows.Close()
 	if err != nil {
-		fmt.Println(err)
 		http.Error(writer, err.Error(), 500)
 		return err
 	}
@@ -453,6 +454,7 @@ func getChilPosts(input postsInput, writer http.ResponseWriter, request *http.Re
 	}
 
 	rows, err := db.Query(query, input.Id, input.ParentId)
+	defer rows.Close()
 	if err != nil {
 		http.Error(writer, err.Error(), 500)
 		return []byte{}, err
@@ -477,10 +479,10 @@ func getChilPosts(input postsInput, writer http.ResponseWriter, request *http.Re
 	return result, nil
 }
 
-func getPosts(writer http.ResponseWriter, r *http.Request) {
+func getPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
 		var input postsInput
-		input.Slug = mux.Vars(r)["slug"]
+		input.Slug = ps["slug"]
 		input.Id, _ = strconv.Atoi(input.Slug)
 		// check if forum exist
 		db := db2.GetDB()

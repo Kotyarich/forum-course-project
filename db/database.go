@@ -1,18 +1,29 @@
 package db
 
 import (
-	"database/sql"
+	"github.com/jackc/pgx"
+	_ "github.com/jackc/pgx"
 	"io/ioutil"
-	_ "github.com/lib/pq"
+	"runtime"
 )
 
-var db *sql.DB
+var db *pgx.ConnPool
 
 func init() {
-	connStr := "host=127.0.0.1 user=role1 password='12345' dbname=docker sslmode=disable"
+	runtime.GOMAXPROCS(runtime.NumCPU())
 
+	connectConfig := pgx.ConnConfig{
+		Host: "127.0.0.1",
+		User: "role1",
+		Password: "12345",
+		Database: "docker",
+		Port: 5432,
+	}
 	var err error
-	db, err = sql.Open("postgres", connStr)
+	db, err = pgx.NewConnPool(pgx.ConnPoolConfig{
+		ConnConfig: connectConfig,
+		MaxConnections: 100,
+	})
 	if err != nil {
 		panic(err)
 	}
@@ -29,6 +40,6 @@ func init() {
 	}
 }
 
-func GetDB() *sql.DB {
+func GetDB() *pgx.ConnPool {
 	return db
 }

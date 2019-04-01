@@ -1,11 +1,13 @@
 package models
 
+import "time"
+
 type Thread struct {
 	Author string `json:"author"`
-	Slug string `json:"slug"`
+	Slug *string `json:"slug"`
 	Votes int `json:"votes"`
 	Title string `json:"title"`
-	Created string `json:"created"`
+	Created time.Time `json:"created"`
 	ForumName string `json:"forum"`
 	Id int `json:"id"`
 	Message string `json:"message"`
@@ -14,7 +16,7 @@ type Thread struct {
 type ThreadResult struct {
 	Author string `json:"author"`
 	Title string `json:"title"`
-	Created string `json:"created"`
+	Created time.Time `json:"created"`
 	ForumName string `json:"forum"`
 	Id int `json:"id"`
 	Message string `json:"message"`

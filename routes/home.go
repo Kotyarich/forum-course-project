@@ -1,15 +1,14 @@
 package routes
 
 import (
-	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/dimfeld/httptreemux"
 	"net/http"
 )
 
-func SetHomeRouter(router *mux.Router) {
-	router.HandleFunc("/api", homeHandler)
+func SetHomeRouter(router *httptreemux.TreeMux) {
+	router.GET("/api", homeHandler)
 }
 
-func homeHandler(writer http.ResponseWriter, request *http.Request) {
-	fmt.Println("hi /home")
+func homeHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	writer.WriteHeader(200)
 }

@@ -1,3 +1,5 @@
+SET SYNCHRONOUS_COMMIT = 'off';
+
 DROP TABLE IF EXISTS forum_users;
 DROP TABLE IF EXISTS votes;
 DROP TABLE IF EXISTS posts;
@@ -13,7 +15,7 @@ CREATE TABLE users
   about TEXT,
   email CITEXT UNIQUE NOT NULL,
   fullname VARCHAR(256) NOT NULL,
-  nickname CITEXT UNIQUE
+  nickname CITEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE forums
@@ -38,8 +40,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS f_users_ind ON forum_users (fUser, forum);
 CREATE TABLE threads
 (
   author CITEXT NOT NULL REFERENCES users (nickname),
-  created TIMESTAMPTZ DEFAULT NOW(),
-  forum CITEXT,
+  created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  forum CITEXT NOT NULL ,
   id SERIAL PRIMARY KEY,
   message TEXT NOT NULL,
   slug CITEXT UNIQUE,
@@ -47,12 +49,15 @@ CREATE TABLE threads
   votes INT NOT NULL DEFAULT 0
 );
 
+CREATE INDEX IF NOT EXISTS threads_id ON threads (id);
+CREATE INDEX IF NOT EXISTS threads_id ON threads (id, slug);
+
 CREATE TABLE posts
 (
   id SERIAL PRIMARY KEY,
   author CITEXT NOT NULL REFERENCES users (nickname),
-  created TIMESTAMPTZ DEFAULT NOW(),
-  forum CITEXT,
+  created TIMESTAMP DEFAULT NOW(),
+  forum CITEXT NOT NULL,
   isEdited BOOLEAN DEFAULT FALSE,
   message TEXT NOT NULL,
   parent INT DEFAULT 0,
@@ -60,6 +65,8 @@ CREATE TABLE posts
   slug INTEGER[] NOT NULL,
   rootId INT
 );
+
+CREATE INDEX IF NOT EXISTS posts_id ON posts (id);
 
 CREATE TABLE votes
 (
@@ -81,8 +88,8 @@ $vote_insertion$
 BEGIN
   UPDATE threads
   SET votes = votes + new.voice
-  WHERE id = new.tid;
-  RETURN NEW;
+    WHERE id = new.tid;
+    RETURN NEW;
 END;
 $vote_insertion$
 LANGUAGE plpgsql;
@@ -103,12 +110,12 @@ $add_root_id$
 BEGIN
   IF new.parent = 0 THEN
     UPDATE posts
-    SET rootId = new.id
-    WHERE id = new.id;
+      SET rootId = new.id
+      WHERE id = new.id;
   ELSE
     UPDATE posts
-    SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
-    WHERE id = NEW.id;
+      SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
+      WHERE id = NEW.id;
   END IF;
   RETURN new;
 END;
@@ -119,8 +126,8 @@ CREATE OR REPLACE FUNCTION inc_threads() RETURNS TRIGGER AS
 $thread_insertion$
 BEGIN
   UPDATE forums
-  SET threads = threads + 1
-  WHERE slug = new.forum;
+    SET threads = threads + 1
+    WHERE slug = new.forum;
   RETURN NEW;
 END;
 $thread_insertion$
@@ -130,8 +137,8 @@ CREATE OR REPLACE FUNCTION inc_posts() RETURNS TRIGGER AS
 $post_insertion$
 BEGIN
   UPDATE forums
-  SET posts = posts + 1
-  WHERE slug = new.forum;
+    SET posts = posts + 1
+    WHERE slug = new.forum;
   RETURN NEW;
 END;
 $post_insertion$
