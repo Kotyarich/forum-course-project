@@ -2,28 +2,19 @@ package db
 
 import (
 	"github.com/jackc/pgx"
-	_ "github.com/jackc/pgx"
 	"io/ioutil"
-	"runtime"
 )
 
 var db *pgx.ConnPool
 
 func init() {
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	pgxConfig, _ := pgx.ParseURI("postgres://role1:12345@localhost:5432/docker")
 
-	connectConfig := pgx.ConnConfig{
-		Host: "127.0.0.1",
-		User: "role1",
-		Password: "12345",
-		Database: "docker",
-		Port: 5432,
-	}
 	var err error
-	db, err = pgx.NewConnPool(pgx.ConnPoolConfig{
-		ConnConfig: connectConfig,
-		MaxConnections: 100,
-	})
+	db, err = pgx.NewConnPool(
+		pgx.ConnPoolConfig{
+			ConnConfig: pgxConfig,
+		})
 	if err != nil {
 		panic(err)
 	}

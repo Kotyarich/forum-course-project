@@ -1,0 +1,38 @@
+FROM golang:1.12-stretch AS lang
+
+WORKDIR /home/source
+
+COPY . .
+RUN go get -d && go build -v
+
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get install -y postgresql-10
+
+USER postgres
+
+RUN /etc/init.d/postgresql start &&\
+    psql --command "CREATE USER role1 WITH SUPERUSER PASSWORD '12345';" &&\
+    createdb -O role1 docker &&\
+    # withput this line pgx driver won't work
+    psql -d docker -c "CREATE EXTENSION IF NOT EXISTS citext;" &&\
+    /etc/init.d/postgresql stop
+
+USER root
+
+RUN echo "listen_addresses = '*'" >> /etc/postgresql/10/main/postgresql.conf
+RUN echo "synchronous_commit = off" >> /etc/postgresql/10/main/postgresql.conf
+RUN echo "fsync = off" >> /etc/postgresql/10/main/postgresql.conf
+RUN echo "autovacuum = off" >> /etc/postgresql/10/main/postgresql.conf
+RUN echo "unix_socket_directories = '/var/run/postgresql'" >> /etc/postgresql/10/main/postgresql.conf
+
+VOLUME  ["/etc/postgresql", "/var/log/postgresql", "/var/lib/postgresql"]
+
+EXPOSE 5000
+
+USER postgres
+
+WORKDIR /home/source
+COPY --from=lang /home/source .
+
+CMD /etc/init.d/postgresql start && sleep 2 && ./dbProject
