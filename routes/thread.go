@@ -1,11 +1,11 @@
 package routes
 
 import (
-	db2 "dbProject/db"
-	"dbProject/models"
-	"dbProject/utils"
 	"encoding/json"
 	"fmt"
+	db2 "github.com/Kotyarich/tp-db-forum/db"
+	"github.com/Kotyarich/tp-db-forum/models"
+	"github.com/Kotyarich/tp-db-forum/utils"
 	"github.com/dimfeld/httptreemux"
 	"io/ioutil"
 	"net/http"

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"dbProject/routes"
 	"fmt"
+	"github.com/Kotyarich/tp-db-forum/routes"
 	"github.com/dimfeld/httptreemux"
 	"net/http"
 )
