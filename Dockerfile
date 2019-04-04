@@ -35,4 +35,4 @@ USER postgres
 WORKDIR /home/source
 COPY --from=lang /home/source .
 
-CMD /etc/init.d/postgresql start && sleep 2 && ./dbProject
+CMD /etc/init.d/postgresql start && sleep 2 && ./source
