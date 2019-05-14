@@ -16,6 +16,8 @@ CREATE TABLE users
   nickname CITEXT UNIQUE NOT NULL
 );
 
+CREATE INDEX IF NOT EXISTS users_nickname ON users (nickname);
+
 CREATE TABLE forums
 (
   id SERIAL PRIMARY KEY,
@@ -25,6 +27,8 @@ CREATE TABLE forums
   title TEXT NOT NULL,
   author CITEXT NOT NULL REFERENCES users (nickname)
 );
+
+CREATE INDEX IF NOT EXISTS forums_slug ON forums (slug);
 
 CREATE TABLE forum_users
 (
@@ -48,13 +52,15 @@ CREATE TABLE threads
 );
 
 CREATE INDEX IF NOT EXISTS threads_id ON threads (id);
-CREATE INDEX IF NOT EXISTS threads_id ON threads (id, slug);
+CREATE INDEX IF NOT EXISTS threads_slug ON threads (slug);
+CREATE INDEX IF NOT EXISTS threads_created ON threads (created);
+CREATE INDEX IF NOT EXISTS threads_forum_created ON threads (forum, created);
 
 CREATE TABLE posts
 (
   id SERIAL PRIMARY KEY,
   author CITEXT NOT NULL REFERENCES users (nickname),
-  created TIMESTAMP DEFAULT NOW(),
+  created TIMESTAMPTZ DEFAULT '1754-08-30 22:43:41.128654848',--'0001-01-01 00:00:00',--NOW(),
   forum CITEXT NOT NULL,
   isEdited BOOLEAN DEFAULT FALSE,
   message TEXT NOT NULL,
@@ -65,6 +71,11 @@ CREATE TABLE posts
 );
 
 CREATE INDEX IF NOT EXISTS posts_id ON posts (id);
+CREATE INDEX IF NOT EXISTS posts_tid ON posts (tid);
+CREATE INDEX IF NOT EXISTS posts_id_and_parent ON posts (id, tid);
+CREATE INDEX IF NOT EXISTS posts_tid_parent_id ON posts (tid, parent, id);
+CREATE INDEX IF NOT EXISTS posts_root_id_slug ON posts (rootId, slug);
+CREATE INDEX IF NOT EXISTS posts_slug ON posts (slug);
 
 CREATE TABLE votes
 (
@@ -79,7 +90,7 @@ DROP TRIGGER IF EXISTS vote_insertion ON votes;
 DROP TRIGGER IF EXISTS vote_updating ON votes;
 DROP TRIGGER IF EXISTS add_root_id ON posts;
 DROP TRIGGER IF EXISTS thread_insertion ON threads;
-DROP TRIGGER IF EXISTS post_insertion ON posts;
+DROP TRIGGER IF EXISTS new_thread_author ON threads;
 
 CREATE OR REPLACE FUNCTION insert_vote() RETURNS TRIGGER AS
 $vote_insertion$
@@ -106,15 +117,19 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION init_post() RETURNS TRIGGER AS
 $add_root_id$
 BEGIN
-  IF new.parent = 0 THEN
-    UPDATE posts
-      SET rootId = new.id
-      WHERE id = new.id;
-  ELSE
-    UPDATE posts
-      SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
-      WHERE id = NEW.id;
-  END IF;
+--   IF new.parent = 0 THEN
+--     UPDATE posts
+--       SET rootId = new.id
+--       WHERE id = new.id;
+--   ELSE
+--     UPDATE posts
+--       SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
+--       WHERE id = NEW.id;
+--   END IF;
+  UPDATE forums
+    SET posts = posts + 1
+    WHERE slug = new.forum;
+  INSERT INTO forum_users VALUES (new.author, new.forum) ON CONFLICT DO NOTHING;
   RETURN new;
 END;
 $add_root_id$
@@ -131,17 +146,6 @@ END;
 $thread_insertion$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION inc_posts() RETURNS TRIGGER AS
-$post_insertion$
-BEGIN
-  UPDATE forums
-    SET posts = posts + 1
-    WHERE slug = new.forum;
-  RETURN NEW;
-END;
-$post_insertion$
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION add_forum_user() RETURNS TRIGGER AS
 $$
 BEGIN
@@ -155,6 +159,4 @@ CREATE TRIGGER vote_updating BEFORE UPDATE ON votes FOR EACH ROW EXECUTE PROCEDU
 CREATE TRIGGER vote_insertion BEFORE INSERT ON votes FOR EACH ROW EXECUTE PROCEDURE insert_vote();
 CREATE TRIGGER add_root_id AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE init_post();
 CREATE TRIGGER thread_insertion AFTER INSERT ON threads FOR EACH ROW EXECUTE PROCEDURE inc_threads();
-CREATE TRIGGER post_insertion AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE inc_posts();
-CREATE TRIGGER new_post_author AFTER INSERT ON posts FOR EACH ROW EXECUTE PROCEDURE add_forum_user();
 CREATE TRIGGER new_thread_author AFTER INSERT ON threads FOR EACH ROW EXECUTE PROCEDURE add_forum_user();
