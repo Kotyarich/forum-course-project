@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	db2 "github.com/Kotyarich/tp-db-forum/db"
 	"github.com/Kotyarich/tp-db-forum/models"
 	"github.com/Kotyarich/tp-db-forum/utils"
@@ -20,6 +19,8 @@ func SetForumRouter(router *httptreemux.TreeMux) {
 }
 
 func createHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	// start :=time.Now()
+	// fmt.Println("createHandler")
 	body, err := ioutil.ReadAll(request.Body)
 	defer request.Body.Close()
 	if err != nil {
@@ -39,6 +40,7 @@ func createHandler(writer http.ResponseWriter, request *http.Request, ps map[str
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
 		utils.WriteData(writer, 404, msg)
+		// fmt.Println("createHandler", time.Now().Sub(start))
 		return
 	}
 
@@ -51,6 +53,7 @@ func createHandler(writer http.ResponseWriter, request *http.Request, ps map[str
 		}
 
 		utils.WriteData(writer, 201, data)
+		// fmt.Println("createHandler", time.Now().Sub(start))
 		return
 	} else {
 		row := db.QueryRow("SELECT * FROM forums WHERE slug = $1", input.Slug)
@@ -63,12 +66,16 @@ func createHandler(writer http.ResponseWriter, request *http.Request, ps map[str
 		}
 
 		data, _ := json.Marshal(f)
+		// // fmt.Println(f)
 		utils.WriteData(writer, 409, data)
+		// fmt.Println("createHandler", time.Now().Sub(start))
 	}
 }
 
 func slugCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	if request.Method == "POST" {
+		// fmt.Println("slugCreateHandler")
+		// start :=time.Now()
 		slug := ps["slug"]
 
 		body, err := ioutil.ReadAll(request.Body)
@@ -90,6 +97,7 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request, ps map
 		if err != nil {
 			msg, _ := json.Marshal(map[string]string{"message": "User not found"})
 			utils.WriteData(writer, 404, msg)
+			// fmt.Println("slugCreateHandler", time.Now().Sub(start))
 			return
 		}
 		// Check forum
@@ -98,6 +106,7 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request, ps map
 		if err != nil {
 			msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
 			utils.WriteData(writer, 404, msg)
+			// fmt.Println("slugCreateHandler", time.Now().Sub(start))
 			return
 		}
 
@@ -119,6 +128,7 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request, ps map
 			}
 
 			utils.WriteData(writer, 201, data)
+			// fmt.Println("slugCreateHandler", time.Now().Sub(start))
 			return
 		} else {
 			row := db.QueryRow("SELECT * FROM threads WHERE slug = $1", thread.Slug)
@@ -127,19 +137,24 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request, ps map
 			err = row.Scan(&thr.Author, &thr.Created, &thr.ForumName, &thr.Id,
 				&thr.Message, &thr.Slug, &thr.Title, &thr.Votes)
 			if err != nil {
-				fmt.Println(err)
+				// // fmt.Println(err)
+				// // fmt.Println(1)
 				http.Error(writer, err.Error(), 500)
 				return
 			}
 
 			data, _ := json.Marshal(thr)
+			// // fmt.Println(thr)
 			utils.WriteData(writer, 409, data)
+			// fmt.Println("slugCreateHandler", time.Now().Sub(start))
 		}
 	}
 }
 
 func getForum(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
+		// fmt.Println("getForum")
+		// start :=time.Now()
 		slug := ps["slug"]
 		db := db2.GetDB()
 		row := db.QueryRow("SELECT posts, slug, threads, title, author " +
@@ -150,6 +165,7 @@ func getForum(writer http.ResponseWriter, r *http.Request, ps map[string]string)
 		if err != nil {
 			msg, _ := json.Marshal(map[string]string{"message": "404"})
 			utils.WriteData(writer, 404, msg)
+			// fmt.Println("getForum", time.Now().Sub(start))
 			return
 		}
 
@@ -157,12 +173,16 @@ func getForum(writer http.ResponseWriter, r *http.Request, ps map[string]string)
 		if err != nil {
 			http.Error(writer, err.Error(), 500)
 		}
+		// // fmt.Println(forum)
 		utils.WriteData(writer, 200, data)
+		// fmt.Println("getForum", time.Now().Sub(start))
 	}
 }
 
 func getUsers(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
+		// fmt.Println("getUsers")
+		// start :=time.Now()
 		slug := ps["slug"]
 		// check if forum exist
 		db := db2.GetDB()
@@ -171,6 +191,7 @@ func getUsers(writer http.ResponseWriter, r *http.Request, ps map[string]string)
 		if err != nil {
 			msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
 			utils.WriteData(writer, 404, msg)
+			// fmt.Println("getUsers", time.Now().Sub(start))
 			return
 		}
 		// TODO use forum's id or not...
@@ -220,13 +241,17 @@ func getUsers(writer http.ResponseWriter, r *http.Request, ps map[string]string)
 			result = append(result, data...)
 		}
 		result = append(result, ']')
+		// // fmt.Println(result)
 
 		utils.WriteData(writer, 200, result)
+		// fmt.Println("getUsers", time.Now().Sub(start))
 	}
 }
 
 func getThreads(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
+		// fmt.Println("getThreads")
+		// start :=time.Now()
 		slug := ps["slug"]
 		// check if forum exist
 		db := db2.GetDB()
@@ -235,6 +260,7 @@ func getThreads(writer http.ResponseWriter, r *http.Request, ps map[string]strin
 		if err != nil {
 			msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
 			utils.WriteData(writer, 404, msg)
+			// fmt.Println("getThreads", time.Now().Sub(start))
 			return
 		}
 
@@ -282,7 +308,9 @@ func getThreads(writer http.ResponseWriter, r *http.Request, ps map[string]strin
 			result = append(result, data...)
 		}
 		result = append(result, ']')
+		// // fmt.Println(result)
 
 		utils.WriteData(writer, 200, result)
+		// fmt.Println("getThreads", time.Now().Sub(start))
 	}
 }

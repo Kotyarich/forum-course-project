@@ -5,9 +5,12 @@ import (
 	"github.com/Kotyarich/tp-db-forum/routes"
 	"github.com/dimfeld/httptreemux"
 	"net/http"
+	"os"
 )
 
 func main() {
+	os.Setenv("TZ", "Etc/UCT")
+
 	router := httptreemux.New()
 
 	routes.SetHomeRouter(router)

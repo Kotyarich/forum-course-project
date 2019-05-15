@@ -3,7 +3,6 @@ package routes
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	db2 "github.com/Kotyarich/tp-db-forum/db"
 	"github.com/Kotyarich/tp-db-forum/models"
 	"github.com/Kotyarich/tp-db-forum/utils"
@@ -24,13 +23,15 @@ func printAll(rows *sql.Rows) {
 		var user models.User
 		i := 0
 		rows.Scan(&i, &user.About, &user.Email, &user.Fullname, &user.Nickname)
-		fmt.Println(user.Email)
+		// // fmt.Println(user.Email)
 	}
-	fmt.Println()
+	// // fmt.Println()
 }
 
 func userCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	nickname := ps["nickname"]
+	// fmt.Println("userCreateHandler")
+	// start :=time.Now()
 
 	body, err := ioutil.ReadAll(request.Body)
 	defer request.Body.Close()
@@ -56,9 +57,11 @@ func userCreateHandler(writer http.ResponseWriter, request *http.Request, ps map
 			http.Error(writer, err.Error(), 500)
 			return
 		}
+		// // fmt.Println(user)
 		writer.Header().Set("content-type", "application/json")
 		writer.WriteHeader(201)
 		writer.Write(data)
+		// fmt.Println("userCreateHandler", time.Now().Sub(start))
 	} else {
 		rows, err := db.Query("SELECT about, email, fullname, nickname " +
 			"FROM users WHERE nickname = $1 OR email = $2",
@@ -88,11 +91,14 @@ func userCreateHandler(writer http.ResponseWriter, request *http.Request, ps map
 		writer.Header().Set("content-type", "application/json")
 		writer.WriteHeader(409)
 		writer.Write(conflicts)
+		// fmt.Println("userCreateHandler", time.Now().Sub(start))
 	}
 }
 
 func userProfileHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	nickname := ps["nickname"]
+	// fmt.Println("userProfileHandler")
+	// start :=time.Now()
 	db := db2.GetDB()
 	row := db.QueryRow("SELECT about, email, fullname, nickname " +
 		"FROM users WHERE nickname = $1", nickname)
@@ -100,21 +106,27 @@ func userProfileHandler(writer http.ResponseWriter, request *http.Request, ps ma
 	var user models.User
 	err := row.Scan(&user.About, &user.Email, &user.Fullname, &user.Nickname)
 	if err != nil {
-		fmt.Println(err)
+		// // fmt.Println(err)
+		// // fmt.Println(2)
 		msg, _ := json.Marshal(map[string]string{"message": "404"})
 		utils.WriteData(writer, 404, msg)
+		// fmt.Println("userProfileHandler", time.Now().Sub(start))
 	} else {
 		data, err := json.Marshal(user)
 		if err != nil {
 			http.Error(writer, err.Error(), 500)
 			return
 		}
+		// // fmt.Println(user)
 		utils.WriteData(writer, 200, data)
+		// fmt.Println("userProfileHandler", time.Now().Sub(start))
 	}
 }
 
 func postProfile(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	nickname := ps["nickname"]
+	// fmt.Println("postProfile")
+	// start :=time.Now()
 	db := db2.GetDB()
 	// read body
 	body, err := ioutil.ReadAll(request.Body)
@@ -136,6 +148,7 @@ func postProfile(writer http.ResponseWriter, request *http.Request, ps map[strin
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
 		utils.WriteData(writer, 404, msg)
+		// fmt.Println("postProfile", time.Now().Sub(start))
 		return
 	}
 	// check empty request
@@ -145,6 +158,7 @@ func postProfile(writer http.ResponseWriter, request *http.Request, ps map[strin
 			http.Error(writer, err.Error(), 500)
 		}
 		utils.WriteData(writer, 200, data)
+		// fmt.Println("postProfile", time.Now().Sub(start))
 		return
 	}
 	// check empty fields
@@ -165,6 +179,7 @@ func postProfile(writer http.ResponseWriter, request *http.Request, ps map[strin
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "conflict"})
 		utils.WriteData(writer, 409, msg)
+		// fmt.Println("postProfile", time.Now().Sub(start))
 		return
 	}
 
@@ -172,13 +187,16 @@ func postProfile(writer http.ResponseWriter, request *http.Request, ps map[strin
 	if number == 0 {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
 		utils.WriteData(writer, 404, msg)
+		// fmt.Println("postProfile", time.Now().Sub(start))
 		return
 	} else {
 		data, err := json.Marshal(user)
 		if err != nil {
 			http.Error(writer, err.Error(), 500)
 		}
+		// // fmt.Println(user)
 		utils.WriteData(writer, 200, data)
+		// fmt.Println("postProfile", time.Now().Sub(start))
 		return
 	}
 }
