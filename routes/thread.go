@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	//"time"
 )
 
 func SetThreadRouter(router *httptreemux.TreeMux) {
@@ -122,6 +123,7 @@ func threadCreateHandler(writer http.ResponseWriter, request *http.Request, ps m
 	}
 	// parse input
 	var posts []models.Post
+	//fmt.Println(body)
 	err = json.Unmarshal(body, &posts)
 	if err != nil {
 		http.Error(writer, err.Error(), 500)
@@ -183,18 +185,21 @@ func createPost(post *models.Post, writer http.ResponseWriter, request *http.Req
 			return errors.New("wrong thread error")
 		}
 	}
-	
-	query := "INSERT INTO posts (author, forum, message, parent, tid, slug, rootId) " +
-		"VALUES ($1, $2, $3, $4, $5, " +
+
+	//_ = db.QueryRow("SELECT ")
+	query := "INSERT INTO posts (author, forum, message, parent, tid, created, slug, rootId) " +
+		"VALUES ($1, $2, $3, $4, $5, $6, " +
 		"(SELECT slug FROM posts WHERE id = $4) || (SELECT currval('posts_id_seq')::integer), "
 	if post.Parent == 0 {
-		query += "(SELECT currval('posts_id_seq')::integer)) RETURNING id, created"
+		query += "(SELECT currval('posts_id_seq')::integer)) RETURNING id"
 	} else {
-		query += "(SELECT rootId FROM posts WHERE id = $4)" + ") RETURNING id, created"
+		query += "(SELECT rootId FROM posts WHERE id = $4)" + ") RETURNING id"
 	}
+
 	err = db.QueryRow(query,
 		post.Author, post.ForumName, post.Message,
-		post.Parent, post.Tid).Scan(&post.Id, &post.Created)
+		post.Parent, post.Tid, post.Created).Scan(&post.Id)
+
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "Parent not found"})
 		utils.WriteData(writer, 409, msg)

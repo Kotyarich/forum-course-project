@@ -126,14 +126,12 @@ func postPostsHandler(writer http.ResponseWriter, request *http.Request, ps map[
 		http.Error(writer, err.Error(), 500)
 		return
 	}
-	// fmt.Println(post)
+
 	utils.WriteData(writer, 200, data)
 }
 
 func postHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	id, err := strconv.Atoi(ps["id"])
-	//fmt.Println("PostHandler")
-	//start := time.Now()
 	if err != nil {
 		http.Error(writer, "wrong ID", 400)
 		return
@@ -143,17 +141,15 @@ func postHandler(writer http.ResponseWriter, request *http.Request, ps map[strin
 		var details models.DetailedInfo
 
 	related := strings.Split(request.FormValue("related"), ",")
-	//fmt.Print(" ", id, related)
-	row := db.QueryRow(`SELECT author, created, forum, id, message, tid, isEdited, parent 
+	row := db.QueryRow(`SELECT author, created, forum, id, message, tid, isEdited 
 			FROM posts WHERE id = $1 `, id)
 
 	var post models.Post
 	err = row.Scan(&post.Author, &post.Created, &post.ForumName, &post.Id,
-		&post.Message, &post.Tid, &post.IsEdited, &post.Parent)
+		&post.Message, &post.Tid, &post.IsEdited)
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "Post not found"})
 		utils.WriteData(writer, 404, msg)
-		//fmt.Println("postHandler", time.Now().Sub(start))
 		return
 	}
 	details.PostInfo = post
@@ -177,7 +173,5 @@ func postHandler(writer http.ResponseWriter, request *http.Request, ps map[strin
 	if err != nil {
 		http.Error(writer, err.Error(), 500)
 	}
-	// fmt.Println(details)
 	utils.WriteData(writer, 200, data)
-	//fmt.Println("postHandler", time.Now().Sub(start))
 }
