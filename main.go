@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"dbProject/routes"
+	"github.com/Kotyarich/tp-db-forum/routes"
 	"github.com/dimfeld/httptreemux"
 	"net/http"
 )

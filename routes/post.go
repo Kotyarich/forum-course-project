@@ -2,7 +2,7 @@ package routes
 
 import (
 	"encoding/json"
-	db2 "dbProject/db"
+	db2 "github.com/Kotyarich/tp-db-forum/db"
 	"github.com/Kotyarich/tp-db-forum/models"
 	"github.com/Kotyarich/tp-db-forum/utils"
 	"github.com/dimfeld/httptreemux"
