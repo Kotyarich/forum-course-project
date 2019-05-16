@@ -16,7 +16,7 @@ CREATE TABLE users
   nickname CITEXT UNIQUE NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS users_nickname ON users (nickname);
+CREATE INDEX IF NOT EXISTS users_nickname_and_email ON users (nickname, email);
 
 CREATE TABLE forums
 (
@@ -36,7 +36,8 @@ CREATE TABLE forum_users
   forum CITEXT NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS f_users_ind ON forum_users (fUser, forum);
+CREATE UNIQUE INDEX IF NOT EXISTS f_users_ind ON forum_users (forum, fUser);
+CREATE INDEX  IF NOT EXISTS forum_users_fuser ON forum_users (fUser);
 
 -- TODO add forum's id
 CREATE TABLE threads
@@ -52,7 +53,7 @@ CREATE TABLE threads
 );
 
 CREATE INDEX IF NOT EXISTS threads_id ON threads (id);
-CREATE INDEX IF NOT EXISTS threads_slug ON threads (slug);
+CREATE INDEX IF NOT EXISTS threads_slug_and_id ON threads (slug, id);
 CREATE INDEX IF NOT EXISTS threads_created ON threads (created);
 CREATE INDEX IF NOT EXISTS threads_forum_created ON threads (forum, created);
 
@@ -84,7 +85,7 @@ CREATE TABLE votes
   voice INT NOT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS votes_ind ON votes (nickname, tid);
+CREATE UNIQUE INDEX IF NOT EXISTS votes_ind ON votes (tid, nickname);
 
 DROP TRIGGER IF EXISTS vote_insertion ON votes;
 DROP TRIGGER IF EXISTS vote_updating ON votes;

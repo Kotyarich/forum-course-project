@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	db2 "github.com/Kotyarich/tp-db-forum/db"
 	"github.com/Kotyarich/tp-db-forum/models"
 	"github.com/Kotyarich/tp-db-forum/utils"
@@ -127,7 +126,6 @@ func slugCreateHandler(writer http.ResponseWriter, request *http.Request, ps map
 			err = row.Scan(&thr.Author, &thr.Created, &thr.ForumName, &thr.Id,
 				&thr.Message, &thr.Slug, &thr.Title, &thr.Votes)
 			if err != nil {
-				fmt.Println(err)
 				http.Error(writer, err.Error(), 500)
 				return
 			}

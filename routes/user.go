@@ -100,7 +100,6 @@ func userProfileHandler(writer http.ResponseWriter, request *http.Request, ps ma
 	var user models.User
 	err := row.Scan(&user.About, &user.Email, &user.Fullname, &user.Nickname)
 	if err != nil {
-		fmt.Println(err)
 		msg, _ := json.Marshal(map[string]string{"message": "404"})
 		utils.WriteData(writer, 404, msg)
 	} else {
