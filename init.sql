@@ -71,9 +71,8 @@ CREATE TABLE posts
 );
 
 CREATE INDEX IF NOT EXISTS posts_id ON posts (id);
-CREATE INDEX IF NOT EXISTS posts_tid ON posts (tid);
 CREATE INDEX IF NOT EXISTS posts_tid_and_slug ON posts (tid, slug);
-CREATE INDEX IF NOT EXISTS posts_id_and_parent ON posts (id, tid);
+CREATE INDEX IF NOT EXISTS posts_tid_and_id ON posts (tid, id);
 CREATE INDEX IF NOT EXISTS posts_tid_parent_id ON posts (tid, parent, id);
 CREATE INDEX IF NOT EXISTS posts_root_id_slug ON posts (rootId, slug);
 CREATE INDEX IF NOT EXISTS posts_slug ON posts (slug);

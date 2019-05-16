@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	db2 "github.com/Kotyarich/tp-db-forum/db"
 	"github.com/Kotyarich/tp-db-forum/models"
@@ -11,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	//"time"
 )
 
 func SetThreadRouter(router *httptreemux.TreeMux) {
@@ -144,6 +142,18 @@ func threadCreateHandler(writer http.ResponseWriter, request *http.Request, ps m
 		return
 	}
 
+	if len(posts) != 0 {
+		if posts[0].Parent != 0 {
+			var parentTId int
+			_ = db.QueryRow("SELECT tid FROM posts WHERE id = $1", posts[0].Parent).Scan(&parentTId)
+			if parentTId != post.Tid {
+				msg, _ := json.Marshal(map[string]string{"message": "Parent in another thread"})
+				utils.WriteData(writer, 409, msg)
+				return
+			}
+		}
+	}
+
 	for i := 0; i < len(posts); i++ {
 		posts[i].Tid = post.Tid
 		posts[i].ForumName = post.ForumName
@@ -169,21 +179,12 @@ func createPost(post *models.Post, writer http.ResponseWriter, request *http.Req
 	db := db2.GetDB()
 	// fmt.Println(post.Created)
 	// check user
-	err := db.QueryRow("SELECT nickname " +
+	err := db.QueryRow("SELECT nickname "+
 		"FROM users WHERE nickname = $1", post.Author).Scan(&post.Author)
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
 		utils.WriteData(writer, 404, msg)
 		return err
-	}
-	if post.Parent != 0 {
-		var parentTId int
-		_ = db.QueryRow("SELECT tid FROM posts WHERE id = $1", post.Parent).Scan(&parentTId)
-		if parentTId != post.Tid {
-			msg, _ := json.Marshal(map[string]string{"message": "Parent in another thread"})
-			utils.WriteData(writer, 409, msg)
-			return errors.New("wrong thread error")
-		}
 	}
 
 	query := "INSERT INTO posts (author, forum, message, parent, tid, slug, rootId) " +
@@ -493,8 +494,8 @@ func getChilPosts(input postsInput, writer http.ResponseWriter, request *http.Re
 
 func getPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	if r.Method == "GET" {
-		// fmt.Println("getPosts")
-		// start := time.Now()
+		//fmt.Println("getPosts")
+		//start := time.Now()
 		var input postsInput
 		input.Slug = ps["slug"]
 		input.Id, _ = strconv.Atoi(input.Slug)
@@ -505,7 +506,7 @@ func getPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string)
 		if err != nil {
 			msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
 			utils.WriteData(writer, 404, msg)
-			// fmt.Println("getPosts", time.Now().Sub(start))
+			//fmt.Println("getPosts", time.Now().Sub(start))
 			return
 		}
 
@@ -517,14 +518,14 @@ func getPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string)
 		switch input.Sort {
 		case "flat", "":
 			err = getFlatPosts(input, writer, r)
-			// fmt.Print("flat ")
+			//fmt.Print("flat ")
 		case "tree":
 			err = getTreePosts(input, writer, r)
-			// fmt.Print("tree ")
+			//fmt.Print("tree ")
 		case "parent_tree":
 			err = getParentTreePosts(input, writer, r)
-			// fmt.Print("ptree ")
+			//fmt.Print("ptree ")
 		}
-		// fmt.Println("getPosts", time.Now().Sub(start), input)
+		//fmt.Println("getPosts", time.Now().Sub(start), input)
 	}
 }
