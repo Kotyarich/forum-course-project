@@ -60,7 +60,7 @@ CREATE TABLE posts
 (
   id SERIAL PRIMARY KEY,
   author CITEXT NOT NULL REFERENCES users (nickname),
-  created TIMESTAMPTZ DEFAULT '1754-08-30 22:43:41.128654848',--'0001-01-01 00:00:00',--NOW(),
+  created TIMESTAMP DEFAULT '1970-01-01 00:00:00',
   forum CITEXT NOT NULL,
   isEdited BOOLEAN DEFAULT FALSE,
   message TEXT NOT NULL,
@@ -117,15 +117,6 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION init_post() RETURNS TRIGGER AS
 $add_root_id$
 BEGIN
---   IF new.parent = 0 THEN
---     UPDATE posts
---       SET rootId = new.id
---       WHERE id = new.id;
---   ELSE
---     UPDATE posts
---       SET rootId = (SELECT rootId FROM posts WHERE id = new.parent)
---       WHERE id = NEW.id;
---   END IF;
   UPDATE forums
     SET posts = posts + 1
     WHERE slug = new.forum;

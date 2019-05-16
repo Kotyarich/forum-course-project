@@ -2,7 +2,7 @@ package routes
 
 import (
 	"encoding/json"
-	db2 "github.com/Kotyarich/tp-db-forum/db"
+	db2 "dbProject/db"
 	"github.com/Kotyarich/tp-db-forum/models"
 	"github.com/Kotyarich/tp-db-forum/utils"
 	"github.com/dimfeld/httptreemux"
@@ -141,12 +141,12 @@ func postHandler(writer http.ResponseWriter, request *http.Request, ps map[strin
 		var details models.DetailedInfo
 
 	related := strings.Split(request.FormValue("related"), ",")
-	row := db.QueryRow(`SELECT author, created, forum, id, message, tid, isEdited 
+	row := db.QueryRow(`SELECT author, created, forum, id, message, tid, isEdited, parent 
 			FROM posts WHERE id = $1 `, id)
 
 	var post models.Post
 	err = row.Scan(&post.Author, &post.Created, &post.ForumName, &post.Id,
-		&post.Message, &post.Tid, &post.IsEdited)
+		&post.Message, &post.Tid, &post.IsEdited, &post.Parent)
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "Post not found"})
 		utils.WriteData(writer, 404, msg)

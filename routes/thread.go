@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	db2 "github.com/Kotyarich/tp-db-forum/db"
+	db2 "dbProject/db"
 	"github.com/Kotyarich/tp-db-forum/models"
 	"github.com/Kotyarich/tp-db-forum/utils"
 	"github.com/dimfeld/httptreemux"
@@ -186,19 +186,18 @@ func createPost(post *models.Post, writer http.ResponseWriter, request *http.Req
 		}
 	}
 
-	//_ = db.QueryRow("SELECT ")
-	query := "INSERT INTO posts (author, forum, message, parent, tid, created, slug, rootId) " +
-		"VALUES ($1, $2, $3, $4, $5, $6, " +
+	query := "INSERT INTO posts (author, forum, message, parent, tid, slug, rootId) " +
+		"VALUES ($1, $2, $3, $4, $5, " +
 		"(SELECT slug FROM posts WHERE id = $4) || (SELECT currval('posts_id_seq')::integer), "
 	if post.Parent == 0 {
-		query += "(SELECT currval('posts_id_seq')::integer)) RETURNING id"
+		query += "(SELECT currval('posts_id_seq')::integer)) RETURNING id, created"
 	} else {
-		query += "(SELECT rootId FROM posts WHERE id = $4)" + ") RETURNING id"
+		query += "(SELECT rootId FROM posts WHERE id = $4)) RETURNING id, created"
 	}
 
 	err = db.QueryRow(query,
 		post.Author, post.ForumName, post.Message,
-		post.Parent, post.Tid, post.Created).Scan(&post.Id)
+		post.Parent, post.Tid).Scan(&post.Id, &post.Created)
 
 	if err != nil {
 		msg, _ := json.Marshal(map[string]string{"message": "Parent not found"})

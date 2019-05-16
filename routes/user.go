@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	db2 "github.com/Kotyarich/tp-db-forum/db"
+	db2 "dbProject/db"
 	"github.com/Kotyarich/tp-db-forum/models"
 	"github.com/Kotyarich/tp-db-forum/utils"
 	"github.com/dimfeld/httptreemux"
