@@ -28,7 +28,7 @@ CREATE TABLE forums
   author CITEXT NOT NULL REFERENCES users (nickname)
 );
 
-CREATE INDEX IF NOT EXISTS forums_slug ON forums (slug);
+CREATE INDEX IF NOT EXISTS forums_slug ON forums USING hash (slug);
 
 CREATE TABLE forum_users
 (
@@ -43,7 +43,7 @@ CREATE INDEX  IF NOT EXISTS forum_users_fuser ON forum_users (fUser);
 CREATE TABLE threads
 (
   author CITEXT NOT NULL REFERENCES users (nickname),
-  created TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created TIMESTAMP NOT NULL DEFAULT NOW(),
   forum CITEXT NOT NULL ,
   id SERIAL PRIMARY KEY,
   message TEXT NOT NULL,
