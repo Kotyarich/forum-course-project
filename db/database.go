@@ -8,8 +8,8 @@ import (
 var db *pgx.ConnPool
 
 func init() {
-	pgxConfig, _ := pgx.ParseURI("postgres://role1:12345@localhost:5432/docker")
-
+	pgxConfig, _ := pgx.ParseURI("postgres://kotyarich:1234@localhost:5432/postgres")
+	pgxConfig.RuntimeParams["timezone"] = "Europe/Moscow"
 	var err error
 	db, err = pgx.NewConnPool(
 		pgx.ConnPoolConfig{

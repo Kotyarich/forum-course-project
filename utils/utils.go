@@ -5,5 +5,5 @@ import "net/http"
 func WriteData(writer http.ResponseWriter, status int, data []byte) {
 	writer.Header().Set("content-type", "application/json")
 	writer.WriteHeader(status)
-	writer.Write(data)
+	_, _ = writer.Write(data)
 }
