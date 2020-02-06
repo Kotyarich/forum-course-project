@@ -8,14 +8,19 @@ import (
 )
 
 type ForumUseCase struct {
-	forumRepo  forum.RepositoryForum
-	threadRepo forum.RepositoryThread
+	forumRepo   forum.RepositoryForum
+	threadRepo  forum.RepositoryThread
+	serviceRepo forum.RepositoryService
 }
 
-func NewForumUseCase(forumRepo forum.RepositoryForum, threadRepo forum.RepositoryThread) *ForumUseCase {
+func NewForumUseCase(
+	forumRepo forum.RepositoryForum,
+	threadRepo forum.RepositoryThread,
+	serviceRepo forum.RepositoryService) *ForumUseCase {
 	return &ForumUseCase{
-		forumRepo:  forumRepo,
-		threadRepo: threadRepo,
+		forumRepo:   forumRepo,
+		threadRepo:  threadRepo,
+		serviceRepo: serviceRepo,
 	}
 }
 
@@ -123,4 +128,17 @@ func (u *ForumUseCase) VoteForThread(ctx context.Context, slug string, vote mode
 	}
 
 	return thread, nil
+}
+
+func (u *ForumUseCase) Clear(ctx context.Context) error {
+	return u.serviceRepo.Clear(ctx)
+}
+
+func (u *ForumUseCase) Status(ctx context.Context) (*models.Status, error) {
+	status, err := u.serviceRepo.Status(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
 }

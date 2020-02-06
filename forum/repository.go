@@ -23,3 +23,8 @@ type RepositoryThread interface {
 	GetThreadPostsParentTree(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error)
 	VoteForThread(ctx context.Context, slug string, vote *models.Vote) (*models.Thread, error)
 }
+
+type RepositoryService interface {
+	Clear(ctx context.Context) error
+	Status(ctx context.Context) (*models.Status, error)
+}

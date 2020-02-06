@@ -19,4 +19,7 @@ func RegisterHTTPEndpoints(router *httptreemux.TreeMux, uc forum.UseCase) {
 	router.POST("/api/thread/:slug/details", handler.PostThreadHandler)
 	router.GET("/api/thread/:slug/posts", handler.GetThreadPosts)
 	router.POST("/api/thread/:slug/vote", handler.ThreadVoteHandler)
+
+	router.POST("/api/service/clear", handler.ClearHandler)
+	router.GET("/api/service/status", handler.StatusHandler)
 }

@@ -30,6 +30,7 @@ func NewApp() *App {
 	userRepo := userPostgres.NewUserRepository()
 	forumRepo := forumPostgres.NewForumRepository()
 	threadRepo := forumPostgres.NewThreadRepository()
+	serviceRepo := forumPostgres.NewServiceRepository()
 
 	return &App{
 		userUC: userUceCase.NewUserUseCase(
@@ -37,7 +38,7 @@ func NewApp() *App {
 			"hash_salt",
 			[]byte("signing_key"),
 			time.Hour*24*7),
-		forumUC: forumUseCase.NewForumUseCase(forumRepo, threadRepo),
+		forumUC: forumUseCase.NewForumUseCase(forumRepo, threadRepo, serviceRepo),
 	}
 }
 
@@ -45,7 +46,6 @@ func (a *App) Run(port string) error {
 	router := httptreemux.New()
 
 	routes.SetHomeRouter(router)
-	routes.SetServiceRouter(router)
 	routes.SetPostRouter(router)
 
 	forumHttp.RegisterHTTPEndpoints(router, a.forumUC)
