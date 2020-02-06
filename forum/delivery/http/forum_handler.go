@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type Handler struct {
@@ -91,43 +90,6 @@ func (h *Handler) ForumCreateHandler(writer http.ResponseWriter, request *http.R
 
 	utils.WriteData(writer, http.StatusCreated, data)
 	return
-}
-
-type Thread struct {
-	Author    string    `json:"author"`
-	Slug      *string   `json:"slug"`
-	Votes     int       `json:"votes"`
-	Title     string    `json:"title"`
-	Created   time.Time `json:"created"`
-	ForumName string    `json:"forum"`
-	Id        int       `json:"id"`
-	Message   string    `json:"message"`
-}
-
-func threadToModel(t *Thread) *models.Thread {
-	return &models.Thread{
-		Author:    t.Author,
-		Slug:      t.Slug,
-		Title:     t.Title,
-		Message:   t.Message,
-		ForumName: t.ForumName,
-		Id:        t.Id,
-		Created:   t.Created,
-		Votes:     t.Votes,
-	}
-}
-
-func modelToThread(t *models.Thread) *Thread {
-	return &Thread{
-		Author:    t.Author,
-		Slug:      t.Slug,
-		Title:     t.Title,
-		Message:   t.Message,
-		ForumName: t.ForumName,
-		Id:        t.Id,
-		Created:   t.Created,
-		Votes:     t.Votes,
-	}
 }
 
 func (h *Handler) ThreadCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {

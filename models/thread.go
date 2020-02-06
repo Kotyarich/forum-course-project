@@ -26,3 +26,11 @@ type ThreadUpdate struct {
 	Message string `json:"message"`
 	Title   string `json:"title"`
 }
+
+type PostSortType int
+
+const (
+	Flat       PostSortType = 0
+	Tree       PostSortType = 1
+	ParentTree PostSortType = 2
+)

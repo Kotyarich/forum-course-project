@@ -29,6 +29,7 @@ type App struct {
 func NewApp() *App {
 	userRepo := userPostgres.NewUserRepository()
 	forumRepo := forumPostgres.NewForumRepository()
+	threadRepo := forumPostgres.NewThreadRepository()
 
 	return &App{
 		userUC: userUceCase.NewUserUseCase(
@@ -36,7 +37,7 @@ func NewApp() *App {
 			"hash_salt",
 			[]byte("signing_key"),
 			time.Hour*24*7),
-		forumUC: forumUseCase.NewForumUseCase(forumRepo),
+		forumUC: forumUseCase.NewForumUseCase(forumRepo, threadRepo),
 	}
 }
 
@@ -46,7 +47,6 @@ func (a *App) Run(port string) error {
 	routes.SetHomeRouter(router)
 	routes.SetServiceRouter(router)
 	routes.SetPostRouter(router)
-	routes.SetThreadRouter(router)
 
 	forumHttp.RegisterHTTPEndpoints(router, a.forumUC)
 	userHttp.RegisterHTTPEndpoints(router, a.userUC)
