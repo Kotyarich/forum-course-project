@@ -5,21 +5,25 @@ import (
 	"dbProject/forum"
 	"dbProject/models"
 	"strconv"
+	"time"
 )
 
 type ForumUseCase struct {
 	forumRepo   forum.RepositoryForum
 	threadRepo  forum.RepositoryThread
+	postRepo    forum.RepositoryPost
 	serviceRepo forum.RepositoryService
 }
 
 func NewForumUseCase(
 	forumRepo forum.RepositoryForum,
 	threadRepo forum.RepositoryThread,
+	postRepo forum.RepositoryPost,
 	serviceRepo forum.RepositoryService) *ForumUseCase {
 	return &ForumUseCase{
 		forumRepo:   forumRepo,
 		threadRepo:  threadRepo,
+		postRepo:    postRepo,
 		serviceRepo: serviceRepo,
 	}
 }
@@ -141,4 +145,53 @@ func (u *ForumUseCase) Status(ctx context.Context) (*models.Status, error) {
 	}
 
 	return status, nil
+}
+
+func (u *ForumUseCase) GetPostInfo(ctx context.Context, id int, user, thread, forum bool) (*models.DetailedInfo, error) {
+	details := new(models.DetailedInfo)
+
+	post, err := u.postRepo.GetPost(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	details.PostInfo = *post
+
+	if user {
+		details.AuthorInfo, err = u.postRepo.GetPostAuthor(ctx, post.Author)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if forum {
+		details.ForumInfo, err = u.postRepo.GetPostForum(ctx, post.ForumName)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if thread {
+		details.ThreadInfo, err = u.postRepo.GetPostThread(ctx, post.Tid)
+		if err != nil {
+			return nil, err
+		}
+		// TODO temporary for tests
+		details.ThreadInfo.Created = details.ThreadInfo.Created.Add(-3 * time.Hour)
+	}
+
+	return details, nil
+}
+
+func (u *ForumUseCase) ChangePost(ctx context.Context, id int, message string) (*models.Post, error) {
+	post, err := u.postRepo.GetPost(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if message != "" && message != post.Message {
+		err = u.postRepo.ChangePost(ctx, message, post)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return post, nil
 }

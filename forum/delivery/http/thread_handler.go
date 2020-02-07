@@ -86,7 +86,7 @@ func toModelPost(p *Post) *models.Post {
 	}
 }
 
-func modelToPost(p *models.Post) *Post {
+func ModelToPost(p *models.Post) *Post {
 	return &Post{
 		Author:    p.Author,
 		Created:   p.Created,
@@ -105,7 +105,7 @@ func modelsToPostsArray(p []*models.Post) []Post {
 	}
 	var posts []Post
 	for i := 0; i < len(p); i++ {
-		posts = append(posts, *modelToPost(p[i]))
+		posts = append(posts, *ModelToPost(p[i]))
 	}
 
 	return posts
@@ -252,7 +252,7 @@ func (h *Handler) GetThreadPosts(writer http.ResponseWriter, r *http.Request, ps
 			result = append(result, ',')
 		}
 
-		data, err := json.Marshal(modelToPost(posts[i]))
+		data, err := json.Marshal(ModelToPost(posts[i]))
 		if err != nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return

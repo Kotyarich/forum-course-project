@@ -42,7 +42,7 @@ func toPostgresThread(thread *models.Thread) *Thread {
 	}
 }
 
-func toModelThread(thread *Thread) *models.Thread {
+func ToModelThread(thread *Thread) *models.Thread {
 	return &models.Thread{
 		Id:        thread.Id,
 		Author:    thread.Author,
@@ -129,7 +129,7 @@ func (r *ThreadRepository) GetThreadBySlug(ctx context.Context, slug string) (*m
 	}
 	// TODO temporary for tests
 	thread.Created = thread.Created.Add(-3 * time.Hour)
-	return toModelThread(&thread), nil
+	return ToModelThread(&thread), nil
 }
 
 func (r *ThreadRepository) GetThreadById(ctx context.Context, id int) (*models.Thread, error) {
@@ -143,7 +143,7 @@ func (r *ThreadRepository) GetThreadById(ctx context.Context, id int) (*models.T
 	}
 	// TODO temporary for tests
 	thread.Created = thread.Created.Add(-3 * time.Hour)
-	return toModelThread(&thread), nil
+	return ToModelThread(&thread), nil
 }
 
 func (r *ThreadRepository) ChangeThread(ctx context.Context, slug, title, message string) (*models.Thread, error) {
@@ -182,7 +182,7 @@ func (r *ThreadRepository) ChangeThread(ctx context.Context, slug, title, messag
 	// TODO temporary for tests
 	thread.Created = thread.Created.Add(-3 * time.Hour)
 
-	return toModelThread(&thread), nil
+	return ToModelThread(&thread), nil
 }
 
 func (r *ThreadRepository) getPostsRows(query string, threadId, since, limit int) (*pgx.Rows, error) {
@@ -393,5 +393,5 @@ func (r *ThreadRepository) VoteForThread(ctx context.Context, slug string, vote 
 		return nil, err
 	}
 
-	return toModelThread(&thread), err
+	return ToModelThread(&thread), err
 }

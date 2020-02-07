@@ -51,10 +51,10 @@ func (r *ForumRepository) CreateForum(ctx context.Context, forum *models.Forum) 
 		if err != nil {
 			return nil, err
 		}
-		return toModelForum(&conflictForum), forumPkg.ErrForumAlreadyExists
+		return ToModelForum(&conflictForum), forumPkg.ErrForumAlreadyExists
 	}
 
-	return toModelForum(f), nil
+	return ToModelForum(f), nil
 }
 
 func (r *ForumRepository) CreateThread(ctx context.Context, slug string, t *models.Thread) (*models.Thread, error) {
@@ -94,14 +94,14 @@ func (r *ForumRepository) CreateThread(ctx context.Context, slug string, t *mode
 		}
 		conflictThread.Created = conflictThread.Created.Add(-time.Hour * 3)
 
-		return toModelThread(&conflictThread), forumPkg.ErrThreadAlreadyExists
+		return ToModelThread(&conflictThread), forumPkg.ErrThreadAlreadyExists
 	}
 
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
 	}
-	return toModelThread(thread), nil
+	return ToModelThread(thread), nil
 }
 
 func (r *ForumRepository) GetForum(ctx context.Context, slug string) (*models.Forum, error) {
@@ -113,7 +113,7 @@ func (r *ForumRepository) GetForum(ctx context.Context, slug string) (*models.Fo
 		return nil, forumPkg.ErrForumNotFound
 	}
 
-	return toModelForum(&forum), nil
+	return ToModelForum(&forum), nil
 }
 
 func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.Thread, error) {
@@ -175,7 +175,7 @@ func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since strin
 		// TODO temporary for tests
 		thr.Created = thr.Created.Add(-time.Hour * 3)
 
-		result = append(result, toModelThread(&thr))
+		result = append(result, ToModelThread(&thr))
 	}
 	return result, nil
 }
@@ -248,7 +248,7 @@ func toPostgresForum(f *models.Forum) *Forum {
 	}
 }
 
-func toModelForum(f *Forum) *models.Forum {
+func ToModelForum(f *Forum) *models.Forum {
 	return &models.Forum{
 		Title:   f.Title,
 		Slug:    f.Slug,

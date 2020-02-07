@@ -24,6 +24,14 @@ type RepositoryThread interface {
 	VoteForThread(ctx context.Context, slug string, vote *models.Vote) (*models.Thread, error)
 }
 
+type RepositoryPost interface {
+	GetPostAuthor(ctx context.Context, nickname string) (*models.User, error)
+	GetPostForum(ctx context.Context, slug string) (*models.Forum, error)
+	GetPostThread(ctx context.Context, id int) (*models.Thread, error)
+	GetPost(ctx context.Context, id int) (*models.Post, error)
+	ChangePost(ctx context.Context, newMessage string, post *models.Post) error
+}
+
 type RepositoryService interface {
 	Clear(ctx context.Context) error
 	Status(ctx context.Context) (*models.Status, error)

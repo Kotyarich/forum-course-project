@@ -59,7 +59,7 @@ func (h *Handler) UserGetHandler(writer http.ResponseWriter, request *http.Reque
 		}
 	}
 
-	data, err := json.Marshal(userToUserOutput(u))
+	data, err := json.Marshal(UserToUserOutput(u))
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
@@ -99,7 +99,7 @@ func (h *Handler) UserPostHandler(writer http.ResponseWriter, request *http.Requ
 		return
 	}
 
-	data, err := json.Marshal(userToUserOutput(newUser))
+	data, err := json.Marshal(UserToUserOutput(newUser))
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
@@ -143,7 +143,7 @@ func (h *Handler) UserCreateHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	data, err := json.Marshal(userToUserOutput(model))
+	data, err := json.Marshal(UserToUserOutput(model))
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
@@ -153,15 +153,15 @@ func (h *Handler) UserCreateHandler(writer http.ResponseWriter, request *http.Re
 	_, _ = writer.Write(data)
 }
 
-type userOutput struct {
+type UserOutput struct {
 	About    string `json:"about"`
 	Email    string `json:"email"`
 	Fullname string `json:"fullname"`
 	Nickname string `json:"nickname"`
 }
 
-func userToUserOutput(user *models.User) *userOutput {
-	return &userOutput{
+func UserToUserOutput(user *models.User) *UserOutput {
+	return &UserOutput{
 		Nickname: user.Nickname,
 		Fullname: user.Fullname,
 		Email:    user.Email,
@@ -176,7 +176,7 @@ func UsersToJsonArray(users []*models.User) ([]byte, error) {
 			result = append(result, ',')
 		}
 
-		userOutput := userToUserOutput(users[i])
+		userOutput := UserToUserOutput(users[i])
 		data, err := json.Marshal(userOutput)
 		if err != nil {
 			return nil, err

@@ -1,8 +1,8 @@
 package models
 
 type Vote struct {
-	Voice    Voice  `json:"voice"`
-	Nickname string `json:"nickname"`
+	Voice    Voice
+	Nickname string
 }
 
 type Voice int
