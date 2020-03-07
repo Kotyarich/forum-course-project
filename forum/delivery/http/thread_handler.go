@@ -11,6 +11,17 @@ import (
 	"time"
 )
 
+type ThreadHandler struct {
+	useCase forum.UseCaseThread
+}
+
+
+func NewThreadHandler(useCase forum.UseCaseThread) *ThreadHandler {
+	return &ThreadHandler{
+		useCase: useCase,
+	}
+}
+
 type Thread struct {
 	Author    string    `json:"author"`
 	Slug      *string   `json:"slug"`
@@ -111,7 +122,7 @@ func modelsToPostsArray(p []*models.Post) []Post {
 	return posts
 }
 
-func (h *Handler) ThreadPostCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *ThreadHandler) ThreadPostCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	body, err := ioutil.ReadAll(request.Body)
 	defer request.Body.Close()
 	if err != nil {
@@ -159,7 +170,7 @@ func (h *Handler) ThreadPostCreateHandler(writer http.ResponseWriter, request *h
 	common.WriteData(writer, http.StatusCreated, data)
 }
 
-func (h *Handler) GetThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *ThreadHandler) GetThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 
 	thread, err := h.useCase.GetThread(request.Context(), slug)
@@ -179,7 +190,7 @@ func (h *Handler) GetThreadHandler(writer http.ResponseWriter, request *http.Req
 	common.WriteData(writer, http.StatusOK, data)
 }
 
-func (h *Handler) PostThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *ThreadHandler) PostThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 
 	body, err := ioutil.ReadAll(request.Body)
@@ -214,7 +225,7 @@ func (h *Handler) PostThreadHandler(writer http.ResponseWriter, request *http.Re
 	common.WriteData(writer, http.StatusOK, data)
 }
 
-func (h *Handler) GetThreadPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
+func (h *ThreadHandler) GetThreadPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 
 	since, err := strconv.Atoi(r.FormValue("since"))
@@ -282,7 +293,7 @@ func toModelVote(v *Vote) models.Vote {
 	}
 }
 
-func (h *Handler) ThreadVoteHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *ThreadHandler) ThreadVoteHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 
 	body, err := ioutil.ReadAll(request.Body)

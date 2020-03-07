@@ -2,12 +2,25 @@ package http
 
 import (
 	"dbProject/common"
+	"dbProject/forum"
 	"dbProject/models"
 	"encoding/json"
 	"net/http"
 )
 
-func (h *Handler) ClearHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+type ServiceHandler struct {
+	useCase forum.UseCaseService
+}
+
+
+func NewServiceHandler(useCase forum.UseCaseService) *ServiceHandler {
+	return &ServiceHandler{
+		useCase: useCase,
+	}
+}
+
+
+func (h *ServiceHandler) ClearHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	err := h.useCase.Clear(request.Context())
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -33,7 +46,7 @@ func modelToStatus(status *models.Status) Status {
 	}
 }
 
-func (h *Handler) StatusHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *ServiceHandler) StatusHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	stats, err := h.useCase.Status(request.Context())
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)

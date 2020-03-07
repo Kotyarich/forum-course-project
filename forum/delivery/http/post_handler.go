@@ -11,11 +11,23 @@ import (
 	"strings"
 )
 
+type PostHandler struct {
+	useCase forum.UseCasePost
+}
+
+
+func NewPostHandler(useCase forum.UseCasePost) *PostHandler {
+	return &PostHandler{
+		useCase: useCase,
+	}
+}
+
+
 type postInput struct {
 	Message string `json:"message"`
 }
 
-func (h *Handler) ChangePostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *PostHandler) ChangePostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	id, err := strconv.Atoi(ps["id"])
 	if err != nil {
 		http.Error(writer, "wrong ID", http.StatusBadRequest)
@@ -62,7 +74,7 @@ type DetailedInfo struct {
 	ForumInfo  *ForumOutput         `json:"forum,omitempty"`
 }
 
-func (h *Handler) GetPostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *PostHandler) GetPostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	id, err := strconv.Atoi(ps["id"])
 	if err != nil {
 		http.Error(writer, "wrong ID", http.StatusBadRequest)

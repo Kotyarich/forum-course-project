@@ -11,12 +11,13 @@ import (
 	"strconv"
 )
 
-type Handler struct {
-	useCase forum.UseCase
+type ForumHandler struct {
+	useCase forum.UseCaseForum
 }
 
-func NewHandler(useCase forum.UseCase) *Handler {
-	return &Handler{
+
+func NewForumHandler(useCase forum.UseCaseForum) *ForumHandler {
+	return &ForumHandler{
 		useCase: useCase,
 	}
 }
@@ -55,7 +56,7 @@ func forumToOutputFormat(f *models.Forum) *ForumOutput {
 	}
 }
 
-func (h *Handler) ForumCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *ForumHandler) ForumCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	body, err := ioutil.ReadAll(request.Body)
 	defer request.Body.Close()
 	if err != nil {
@@ -92,7 +93,7 @@ func (h *Handler) ForumCreateHandler(writer http.ResponseWriter, request *http.R
 	return
 }
 
-func (h *Handler) ThreadCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+func (h *ForumHandler) ThreadCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 
 	body, err := ioutil.ReadAll(request.Body)
@@ -134,7 +135,7 @@ func (h *Handler) ThreadCreateHandler(writer http.ResponseWriter, request *http.
 	}
 }
 
-func (h *Handler) ForumsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
+func (h *ForumHandler) ForumsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	forums, err := h.useCase.GetForums(r.Context())
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -148,7 +149,7 @@ func (h *Handler) ForumsHandler(writer http.ResponseWriter, r *http.Request, ps 
 	common.WriteData(writer, http.StatusOK, data)
 }
 
-func (h *Handler) ForumDetailsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
+func (h *ForumHandler) ForumDetailsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 
 	f, err := h.useCase.GetForumDetails(r.Context(), slug)
@@ -168,7 +169,7 @@ func (h *Handler) ForumDetailsHandler(writer http.ResponseWriter, r *http.Reques
 	common.WriteData(writer, http.StatusOK, data)
 }
 
-func (h *Handler) ForumUsersHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
+func (h *ForumHandler) ForumUsersHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 	since := r.FormValue("since")
 	limit, err := strconv.Atoi(r.FormValue("limit"))
@@ -236,7 +237,7 @@ func threadsToJsonArray(threads []*models.Thread) ([]byte, error) {
 	return result, nil
 }
 
-func (h *Handler) ForumThreadsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
+func (h *ForumHandler) ForumThreadsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
 	slug := ps["slug"]
 	since := r.FormValue("since")
 	limit, err := strconv.Atoi(r.FormValue("limit"))

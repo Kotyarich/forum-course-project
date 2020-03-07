@@ -56,11 +56,11 @@ func (a *App) Run(port string) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	//go func() {
-	if err := a.httpServer.ListenAndServe(); err != nil {
-		log.Fatalf("Failed to listen and serve: %+v", err)
-	}
-	//}()
+	go func() {
+		if err := a.httpServer.ListenAndServe(); err != nil {
+			log.Fatalf("Failed to listen and serve: %+v", err)
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Interrupt)
