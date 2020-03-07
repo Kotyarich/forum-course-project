@@ -1,9 +1,9 @@
 package http
 
 import (
+	"dbProject/common"
 	"dbProject/forum"
 	userHttp "dbProject/user/delivery/http"
-	"dbProject/utils"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -39,7 +39,7 @@ func (h *Handler) ChangePostHandler(writer http.ResponseWriter, request *http.Re
 	post, err := h.useCase.ChangePost(request.Context(), id, input.Message)
 	if err == forum.ErrPostNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Post not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -52,7 +52,7 @@ func (h *Handler) ChangePostHandler(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 }
 
 type DetailedInfo struct {
@@ -87,19 +87,19 @@ func (h *Handler) GetPostHandler(writer http.ResponseWriter, request *http.Reque
 	details, err := h.useCase.GetPostInfo(request.Context(), id, u, t, f)
 	if err == forum.ErrPostNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Post not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err == forum.ErrThreadNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err == forum.ErrForumNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err == forum.ErrUserNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -121,5 +121,5 @@ func (h *Handler) GetPostHandler(writer http.ResponseWriter, request *http.Reque
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 }

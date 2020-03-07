@@ -1,9 +1,9 @@
 package http
 
 import (
+	"dbProject/common"
 	"dbProject/forum"
 	"dbProject/models"
-	"dbProject/utils"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -135,15 +135,15 @@ func (h *Handler) ThreadPostCreateHandler(writer http.ResponseWriter, request *h
 
 	if err == forum.ErrThreadNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err == forum.ErrUserNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err == forum.ErrWrongParentsThread {
 		msg, _ := json.Marshal(map[string]string{"message": "Parent in another thread"})
-		utils.WriteData(writer, http.StatusConflict, msg)
+		common.WriteData(writer, http.StatusConflict, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -156,7 +156,7 @@ func (h *Handler) ThreadPostCreateHandler(writer http.ResponseWriter, request *h
 		return
 	}
 
-	utils.WriteData(writer, http.StatusCreated, data)
+	common.WriteData(writer, http.StatusCreated, data)
 }
 
 func (h *Handler) GetThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
@@ -165,7 +165,7 @@ func (h *Handler) GetThreadHandler(writer http.ResponseWriter, request *http.Req
 	thread, err := h.useCase.GetThread(request.Context(), slug)
 	if err == forum.ErrThreadNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -176,7 +176,7 @@ func (h *Handler) GetThreadHandler(writer http.ResponseWriter, request *http.Req
 	if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 	}
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 }
 
 func (h *Handler) PostThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
@@ -199,7 +199,7 @@ func (h *Handler) PostThreadHandler(writer http.ResponseWriter, request *http.Re
 	thread, err := h.useCase.ChangeThread(request.Context(), slug, input.Title, input.Message)
 	if err == forum.ErrThreadNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -211,7 +211,7 @@ func (h *Handler) PostThreadHandler(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 }
 
 func (h *Handler) GetThreadPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
@@ -239,7 +239,7 @@ func (h *Handler) GetThreadPosts(writer http.ResponseWriter, r *http.Request, ps
 	posts, err := h.useCase.GetThreadPosts(r.Context(), slug, limit, since, desc, sort)
 	if err == forum.ErrThreadNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -260,7 +260,7 @@ func (h *Handler) GetThreadPosts(writer http.ResponseWriter, r *http.Request, ps
 		result = append(result, data...)
 	}
 	result = append(result, ']')
-	utils.WriteData(writer, http.StatusOK, result)
+	common.WriteData(writer, http.StatusOK, result)
 }
 
 type Vote struct {
@@ -302,11 +302,11 @@ func (h *Handler) ThreadVoteHandler(writer http.ResponseWriter, request *http.Re
 	thread, err := h.useCase.VoteForThread(request.Context(), slug, toModelVote(&vote))
 	if err == forum.ErrThreadNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err == forum.ErrUserNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -318,5 +318,5 @@ func (h *Handler) ThreadVoteHandler(writer http.ResponseWriter, request *http.Re
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 }

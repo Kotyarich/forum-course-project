@@ -1,8 +1,8 @@
 package http
 
 import (
+	"dbProject/common"
 	"dbProject/models"
-	"dbProject/utils"
 	"encoding/json"
 	"net/http"
 )
@@ -45,5 +45,5 @@ func (h *Handler) StatusHandler(writer http.ResponseWriter, request *http.Reques
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 }

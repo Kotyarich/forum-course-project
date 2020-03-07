@@ -104,6 +104,27 @@ func (r *ForumRepository) CreateThread(ctx context.Context, slug string, t *mode
 	return ToModelThread(thread), nil
 }
 
+func (r *ForumRepository) GetForums(ctx context.Context) ([]*models.Forum, error) {
+	rows, err := r.db.Query("SELECT posts, slug, threads, title, author FROM forums")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var forums []*models.Forum
+	for rows.Next() {
+		forum := Forum{}
+		err = rows.Scan(&forum.Posts, &forum.Slug, &forum.Threads, &forum.Title, &forum.User)
+		if err != nil {
+			return nil, err
+		}
+
+		forums = append(forums, ToModelForum(&forum))
+	}
+
+	return forums, nil
+}
+
 func (r *ForumRepository) GetForum(ctx context.Context, slug string) (*models.Forum, error) {
 	row := r.db.QueryRow("SELECT posts, slug, threads, title, author FROM forums WHERE slug = $1", slug)
 

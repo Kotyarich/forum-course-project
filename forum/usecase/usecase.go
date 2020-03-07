@@ -46,6 +46,15 @@ func (u *ForumUseCase) CreateForumThread(ctx context.Context, slug string, threa
 	return newThread, nil
 }
 
+func (u *ForumUseCase) GetForums(ctx context.Context) ([]*models.Forum, error) {
+	forums, err := u.forumRepo.GetForums(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return forums, nil
+}
+
 func (u *ForumUseCase) GetForumDetails(ctx context.Context, slug string) (*models.Forum, error) {
 	f, err := u.forumRepo.GetForum(ctx, slug)
 	if err != nil {

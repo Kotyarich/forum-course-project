@@ -17,7 +17,7 @@ func NewServiceRepository() *ServiceRepository {
 
 func (r *ServiceRepository) Clear(ctx context.Context) error {
 	_, err := r.db.Exec(`
-			TRUNCATE TABLE forum_users, votes, posts, threads, forums, users 
+			TRUNCATE TABLE forum_users, votes, posts, threads, sessions, forums, users 
 			  RESTART IDENTITY`)
 
 	return err
