@@ -6,4 +6,5 @@ type User struct {
 	Fullname string
 	Email    string
 	About    string
+	IsAdmin  bool
 }

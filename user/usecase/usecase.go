@@ -29,15 +29,52 @@ func NewUserUseCase(
 	}
 }
 
-func (u *UserUseCase) SignUp(ctx context.Context, user *models.User) ([]*models.User, error) {
+func (u *UserUseCase) SignUp(ctx context.Context, user *models.User) ([]*models.User, string, error) {
 	user.Password = passwordHash(user.Password, u.hashSalt)
+	conflicts, userId, err := u.userRepo.CreateUser(ctx, user)
+	if err != nil {
+		return conflicts, "", err
+	}
 
-	return u.userRepo.CreateUser(ctx, user)
+	token, err := u.userRepo.CreateSession(ctx, userId)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return nil, token, nil
 }
 
-func (u *UserUseCase) SignIn(ctx context.Context, username, password string) (string, error) {
-	// TODO add implementation
-	return "Cook", nil
+func (u *UserUseCase) SignIn(ctx context.Context, username, password string) (*models.User, string, error) {
+	password = passwordHash(password, u.hashSalt)
+	user, userId, err := u.userRepo.AuthUser(ctx, username, password)
+	if err != nil {
+		return nil, "", userPkg.ErrUserNotFound
+	}
+
+	token, err := u.userRepo.CreateSession(ctx, userId)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
+}
+
+func (u *UserUseCase) SignOut(ctx context.Context, token string) error {
+	err := u.userRepo.DeleteSession(ctx, token)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *UserUseCase) CheckAuth(ctx context.Context, token string) (*models.User, error) {
+	user, err := u.userRepo.CheckSession(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (u *UserUseCase) GetProfile(ctx context.Context, username string) (*models.User, error) {
@@ -50,7 +87,6 @@ func (u *UserUseCase) GetProfile(ctx context.Context, username string) (*models.
 }
 
 func (u *UserUseCase) ChangeProfile(ctx context.Context, user *models.User) (*models.User, error) {
-	// get current user's data
 	oldUser, err := u.userRepo.GetUser(ctx, user.Nickname)
 	if err != nil {
 		return nil, err
@@ -73,11 +109,6 @@ func (u *UserUseCase) ChangeProfile(ctx context.Context, user *models.User) (*mo
 
 	_, err = u.userRepo.ChangeUser(ctx, user)
 	return user, err
-}
-
-func (u *UserUseCase) ParseToken(ctx context.Context, accessToken string) (*models.User, error) {
-	// TODO add implementation
-	return nil, nil
 }
 
 func passwordHash(password, hashSalt string) string {

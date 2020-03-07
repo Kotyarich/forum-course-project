@@ -2,17 +2,23 @@ package postgres
 
 import (
 	"context"
+	"crypto/sha1"
 	"dbProject/db"
 	"dbProject/models"
 	userPkg "dbProject/user"
+	"fmt"
 	"github.com/jackc/pgx"
+	"strconv"
+	"time"
 )
 
 type User struct {
 	About    string
 	Email    string
 	Fullname string
+	Password string
 	Nickname string
+	IsAdmin  bool
 }
 
 type UserRepository struct {
@@ -23,18 +29,19 @@ func NewUserRepository() *UserRepository {
 	return &UserRepository{db.GetDB()}
 }
 
-func (r UserRepository) CreateUser(ctx context.Context, user *models.User) ([]*models.User, error) {
+func (r UserRepository) CreateUser(ctx context.Context, user *models.User) ([]*models.User, int, error) {
 	model := toPostgresUser(user)
+	userId := -1
 
-	_, err := r.db.Exec("INSERT INTO users (about, email, fullname, nickname) "+
-		"VALUES ($1, $2, $3, $4)",
-		model.About, model.Email, model.Fullname, model.Nickname)
+	err := r.db.QueryRow("INSERT INTO users (about, email, fullname, nickname, password) "+
+		"VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		model.About, model.Email, model.Fullname, model.Nickname, model.Password).Scan(&userId)
 	if err != nil {
 		rows, err := r.db.Query("SELECT about, email, fullname, nickname "+
 			"FROM users WHERE nickname = $1 OR email = $2",
 			model.Nickname, model.Email)
 		if err != nil {
-			return nil, err
+			return nil, userId, err
 		}
 		defer rows.Close()
 
@@ -45,23 +52,73 @@ func (r UserRepository) CreateUser(ctx context.Context, user *models.User) ([]*m
 			conflicts = append(conflicts, ToModel(&u))
 		}
 
-		return conflicts, userPkg.ErrUserAlreadyExists
+		return conflicts, userId, userPkg.ErrUserAlreadyExists
 	}
 
-	return nil, nil
+	return nil, userId, nil
 }
 
-func (r UserRepository) AuthUser(ctx context.Context, username, password string) (*models.User, error) {
-	// TODO add implementation
-	return &models.User{}, nil
+func (r UserRepository) AuthUser(ctx context.Context, username, password string) (*models.User, int, error) {
+	row := r.db.QueryRow("SELECT id, about, email, fullname, nickname "+
+		"FROM users WHERE nickname = $1 AND password = $2", username, password)
+
+	userId := -1
+	var user User
+	err := row.Scan(&userId, &user.About, &user.Email, &user.Fullname, &user.Nickname)
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil, userId, userPkg.ErrUserNotFound
+	}
+
+	return ToModel(&user), userId, nil
 }
 
-func (r UserRepository) GetUser(ctx context.Context, username string) (*models.User, error) {
+func (r UserRepository) CreateSession(ctx context.Context, userId int) (string, error) {
+	userAgent := ctx.Value("UserAgent").(string)
+	authTime := time.Now()
+	token := createToken(userId, userAgent, authTime.String())
+
+	_, err := r.db.Exec("INSERT INTO sessions (user_id, user_agent, time, token) "+
+		"VALUES ($1, $2, $3, $4)",
+		userId, userAgent, authTime, token)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func (r UserRepository) CheckSession(ctx context.Context, token string) (*models.User, error) {
 	row := r.db.QueryRow("SELECT about, email, fullname, nickname "+
-		"FROM users WHERE nickname = $1", username)
+		"FROM users "+
+		"JOIN sessions ON users.id = user_id "+
+		"WHERE token = $1", token)
 
 	var user User
 	err := row.Scan(&user.About, &user.Email, &user.Fullname, &user.Nickname)
+
+	if err != nil {
+		return nil, userPkg.ErrUserNotFound
+	}
+
+	return ToModel(&user), nil
+}
+
+func (r UserRepository) DeleteSession(ctx context.Context, token string) error {
+	_, err := r.db.Exec("DELETE FROM sessions WHERE token = $1", token)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r UserRepository) GetUser(ctx context.Context, username string) (*models.User, error) {
+	row := r.db.QueryRow("SELECT about, email, fullname, nickname, is_admin "+
+		"FROM users WHERE nickname = $1", username)
+
+	var user User
+	err := row.Scan(&user.About, &user.Email, &user.Fullname, &user.Nickname, &user.IsAdmin)
 
 	if err != nil {
 		return nil, userPkg.ErrUserNotFound
@@ -94,8 +151,10 @@ func toPostgresUser(u *models.User) *User {
 	return &User{
 		Nickname: u.Nickname,
 		Fullname: u.Fullname,
+		Password: u.Password,
 		Email:    u.Email,
 		About:    u.About,
+		IsAdmin:  u.IsAdmin,
 	}
 }
 
@@ -105,5 +164,14 @@ func ToModel(u *User) *models.User {
 		Fullname: u.Fullname,
 		Email:    u.Email,
 		About:    u.About,
+		IsAdmin:  u.IsAdmin,
 	}
+}
+
+func createToken(userId int, userAgent, authTime string) string {
+	pwd := sha1.New()
+	pwd.Write([]byte(strconv.Itoa(userId)))
+	pwd.Write([]byte(userAgent))
+	pwd.Write([]byte(authTime))
+	return fmt.Sprintf("%x", pwd.Sum(nil))
 }

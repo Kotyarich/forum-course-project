@@ -1,12 +1,14 @@
 package http
 
 import (
+	"context"
+	"dbProject/common"
 	"dbProject/models"
 	"dbProject/user"
-	"dbProject/utils"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 type Handler struct {
@@ -31,6 +33,7 @@ func userInputToModel(user userInput) *models.User {
 	return &models.User{
 		Nickname: user.Nickname,
 		Fullname: user.Fullname,
+		Password: user.Password,
 		Email:    user.Email,
 		About:    user.About,
 	}
@@ -41,8 +44,81 @@ type signInInput struct {
 	Password string `json:"password"`
 }
 
+func (h *Handler) SignOutHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	cookie, err := request.Cookie("Auth")
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err = h.useCase.SignOut(request.Context(), cookie.Value)
+	http.SetCookie(writer, &http.Cookie{
+		Name:     "Auth",
+		Expires:  time.Now().Add(-24 * time.Hour),
+		HttpOnly: true,
+		Path:     "/",
+	})
+
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+	} else {
+		writer.WriteHeader(http.StatusOK)
+	}
+}
+
 func (h *Handler) UserAuthHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	// TODO implement
+	// read body
+	body, err := ioutil.ReadAll(request.Body)
+	defer request.Body.Close()
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+	// parse body
+	var input signInInput
+	err = json.Unmarshal(body, &input)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	}
+	ctx := context.WithValue(request.Context(), "UserAgent", request.UserAgent())
+
+	u, token, err := h.useCase.SignIn(ctx, input.Nickname, input.Password)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusForbidden)
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:     "Auth",
+		Value:    token,
+		HttpOnly: true,
+		Expires:  time.Now().Add(time.Hour * 24 * 30),
+		Path:     "/",
+		Domain:   "localhost",
+	}
+	http.SetCookie(writer, cookie)
+
+	data, err := json.Marshal(UserToUserOutput(u))
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	common.WriteData(writer, http.StatusOK, data)
+}
+
+func (h *Handler) UserCheckAuthHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	u := request.Context().Value("user")
+	if u == nil {
+		msg, _ := json.Marshal(map[string]string{"error": "not authorised"})
+		common.WriteData(writer, http.StatusForbidden, msg)
+		return
+	}
+
+	data, err := json.Marshal(UserToUserOutput(u.(*models.User)))
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	common.WriteData(writer, http.StatusOK, data)
 }
 
 func (h *Handler) UserGetHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
@@ -51,7 +127,7 @@ func (h *Handler) UserGetHandler(writer http.ResponseWriter, request *http.Reque
 	if err != nil {
 		if err == user.ErrUserNotFound {
 			msg, _ := json.Marshal(map[string]string{"message": "404"})
-			utils.WriteData(writer, http.StatusNotFound, msg)
+			common.WriteData(writer, http.StatusNotFound, msg)
 			return
 		} else {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -64,7 +140,7 @@ func (h *Handler) UserGetHandler(writer http.ResponseWriter, request *http.Reque
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 }
 
 func (h *Handler) UserPostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
@@ -88,11 +164,11 @@ func (h *Handler) UserPostHandler(writer http.ResponseWriter, request *http.Requ
 
 	if err == user.ErrUserAlreadyExists {
 		msg, _ := json.Marshal(map[string]string{"message": "conflict"})
-		utils.WriteData(writer, http.StatusConflict, msg)
+		common.WriteData(writer, http.StatusConflict, msg)
 		return
 	} else if err == user.ErrUserNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		utils.WriteData(writer, http.StatusNotFound, msg)
+		common.WriteData(writer, http.StatusNotFound, msg)
 		return
 	} else if err != nil {
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
@@ -104,11 +180,16 @@ func (h *Handler) UserPostHandler(writer http.ResponseWriter, request *http.Requ
 		http.Error(writer, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	utils.WriteData(writer, http.StatusOK, data)
+	common.WriteData(writer, http.StatusOK, data)
 	return
 }
 
 func (h *Handler) UserCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
+	if request.Method == http.MethodOptions {
+		writer.Header().Set("content-type", "application/json")
+		writer.WriteHeader(http.StatusOK)
+		return
+	}
 	body, err := ioutil.ReadAll(request.Body)
 	defer request.Body.Close()
 	if err != nil {
@@ -124,8 +205,9 @@ func (h *Handler) UserCreateHandler(writer http.ResponseWriter, request *http.Re
 
 	model := userInputToModel(u)
 	model.Nickname = ps["nickname"]
-
-	if conflicts, err := h.useCase.SignUp(request.Context(), model); err != nil {
+	ctx := context.WithValue(request.Context(), "UserAgent", request.UserAgent())
+	conflicts, token, err := h.useCase.SignUp(ctx, model)
+	if err != nil {
 		if conflicts == nil {
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
@@ -142,6 +224,13 @@ func (h *Handler) UserCreateHandler(writer http.ResponseWriter, request *http.Re
 		_, _ = writer.Write(result)
 		return
 	}
+
+	cookie := &http.Cookie{
+		Name:     "Auth",
+		Value:    token,
+		HttpOnly: true,
+	}
+	http.SetCookie(writer, cookie)
 
 	data, err := json.Marshal(UserToUserOutput(model))
 	if err != nil {
