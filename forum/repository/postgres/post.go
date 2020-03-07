@@ -127,3 +127,8 @@ func (r *PostRepository) ChangePost(ctx context.Context, newMessage string, post
 
 	return nil
 }
+
+func (r *PostRepository) DeletePost(ctx context.Context, id int) error {
+	_, err := r.db.Exec("DELETE FROM posts WHERE id = $1", id)
+	return err
+}

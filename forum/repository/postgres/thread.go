@@ -127,8 +127,7 @@ func (r *ThreadRepository) GetThreadBySlug(ctx context.Context, slug string) (*m
 	if err != nil {
 		return nil, forum.ErrThreadNotFound
 	}
-	// TODO temporary for tests
-	thread.Created = thread.Created.Add(-3 * time.Hour)
+
 	return ToModelThread(&thread), nil
 }
 
@@ -141,9 +140,13 @@ func (r *ThreadRepository) GetThreadById(ctx context.Context, id int) (*models.T
 	if err != nil {
 		return nil, forum.ErrThreadNotFound
 	}
-	// TODO temporary for tests
-	thread.Created = thread.Created.Add(-3 * time.Hour)
+
 	return ToModelThread(&thread), nil
+}
+
+func (r *ThreadRepository) DeleteThread(ctx context.Context, id int) error {
+	_, err := r.db.Exec("DELETE FROM threads WHERE id = $1", id)
+	return err
 }
 
 func (r *ThreadRepository) ChangeThread(ctx context.Context, slug, title, message string) (*models.Thread, error) {
@@ -178,9 +181,6 @@ func (r *ThreadRepository) ChangeThread(ctx context.Context, slug, title, messag
 	if err != nil {
 		return nil, forum.ErrThreadNotFound
 	}
-
-	// TODO temporary for tests
-	thread.Created = thread.Created.Add(-3 * time.Hour)
 
 	return ToModelThread(&thread), nil
 }
@@ -385,8 +385,6 @@ func (r *ThreadRepository) VoteForThread(ctx context.Context, slug string, vote 
 		_ = transaction.Rollback()
 		return nil, err
 	}
-	// TODO temporary for tests
-	thread.Created = thread.Created.Add(-3 * time.Hour)
 
 	err = transaction.Commit()
 	if err != nil {

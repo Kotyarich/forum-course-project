@@ -125,6 +125,11 @@ func (r *ForumRepository) GetForums(ctx context.Context) ([]*models.Forum, error
 	return forums, nil
 }
 
+func (r *ForumRepository) DeleteForum(ctx context.Context, slug string) error {
+	_, err := r.db.Exec("DELETE FROM forums WHERE slug = $1", slug)
+	return err
+}
+
 func (r *ForumRepository) GetForum(ctx context.Context, slug string) (*models.Forum, error) {
 	row := r.db.QueryRow("SELECT posts, slug, threads, title, author FROM forums WHERE slug = $1", slug)
 
@@ -137,13 +142,7 @@ func (r *ForumRepository) GetForum(ctx context.Context, slug string) (*models.Fo
 	return ToModelForum(&forum), nil
 }
 
-func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.Thread, error) {
-	var forum Forum
-	err := r.db.QueryRow("SELECT slug FROM forums WHERE slug = $1", slug).Scan(&forum.Slug)
-	if err != nil {
-		return nil, forumPkg.ErrForumNotFound
-	}
-
+func (r *ForumRepository) formGettingThreadsQuery(slug, since string, limit int, sort bool) string {
 	query := "SELECT * FROM threads WHERE forum = $1 "
 	if since != "" {
 		if sort {
@@ -163,24 +162,30 @@ func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since strin
 			query += "LIMIT $2"
 		}
 	}
+	return query
+}
+
+func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.Thread, error) {
+	var forum Forum
+	err := r.db.QueryRow("SELECT slug FROM forums WHERE slug = $1", slug).Scan(&forum.Slug)
+	if err != nil {
+		return nil, forumPkg.ErrForumNotFound
+	}
+
+	query := r.formGettingThreadsQuery(slug, since, limit, sort)
 
 	var rows *pgx.Rows
-	// TODO temporary for tests
-	loc, _ := time.LoadLocation("Europe/Moscow")
-	sinceTime, _ := time.ParseInLocation(time.RFC3339, since, loc)
-	sinceTime = sinceTime.Add(3 * time.Hour)
 
 	if since != "" && limit > 0 {
-		rows, err = r.db.Query(query, slug, sinceTime, limit)
+		rows, err = r.db.Query(query, slug, since, limit)
 	} else if since != "" {
-		rows, err = r.db.Query(query, slug, sinceTime)
+		rows, err = r.db.Query(query, slug, since)
 	} else if limit > 0 {
 		rows, err = r.db.Query(query, slug, limit)
 	} else {
 		rows, err = r.db.Query(query, slug)
 	}
 	defer rows.Close()
-
 	if err != nil {
 		return nil, err
 	}
@@ -193,9 +198,6 @@ func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since strin
 		if err != nil {
 			return nil, err
 		}
-		// TODO temporary for tests
-		thr.Created = thr.Created.Add(-time.Hour * 3)
-
 		result = append(result, ToModelThread(&thr))
 	}
 	return result, nil

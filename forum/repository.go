@@ -9,6 +9,7 @@ type RepositoryForum interface {
 	CreateForum(ctx context.Context, forum *models.Forum) (*models.Forum, error)
 	CreateThread(ctx context.Context, slug string, thread *models.Thread) (*models.Thread, error)
 	GetForum(ctx context.Context, slug string) (*models.Forum, error)
+	DeleteForum(ctx context.Context, slug string) error
 	GetForums(ctx context.Context) ([]*models.Forum, error)
 	GetForumThreads(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.Thread, error)
 	GetForumUsers(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.User, error)
@@ -18,6 +19,7 @@ type RepositoryThread interface {
 	ThreadPostCreate(ctx context.Context, slug string, posts []*models.Post) ([]*models.Post, error)
 	GetThreadBySlug(ctx context.Context, slug string) (*models.Thread, error)
 	GetThreadById(ctx context.Context, id int) (*models.Thread, error)
+	DeleteThread(ctx context.Context, id int) error
 	ChangeThread(ctx context.Context, slug, title, message string) (*models.Thread, error)
 	GetThreadPostsFlat(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error)
 	GetThreadPostsTree(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error)
@@ -30,6 +32,7 @@ type RepositoryPost interface {
 	GetPostForum(ctx context.Context, slug string) (*models.Forum, error)
 	GetPostThread(ctx context.Context, id int) (*models.Thread, error)
 	GetPost(ctx context.Context, id int) (*models.Post, error)
+	DeletePost(ctx context.Context, id int) error
 	ChangePost(ctx context.Context, newMessage string, post *models.Post) error
 }
 
