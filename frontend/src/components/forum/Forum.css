@@ -1,0 +1,32 @@
+.forum {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid #cccccc;
+    border-top: 1px solid #cccccc;
+    padding: 10pt;
+}
+
+.forum__title {
+    color: #497289;
+    font-weight: bold;
+    font-size: large;
+    margin-bottom: 4pt;
+}
+
+.forum__title:hover {
+    color: #2f4a59;
+}
+
+.forum__user {
+    color: #555555;
+}
+
+.forum__header {
+    width: 320pt;
+    margin-right: 30pt;
+}
+
+.forum__numeric-info {
+    font-size: medium;
+    padding-top: 1pt;
+}
