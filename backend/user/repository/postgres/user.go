@@ -114,11 +114,11 @@ func (r UserRepository) DeleteSession(ctx context.Context, token string) error {
 }
 
 func (r UserRepository) GetUser(ctx context.Context, username string) (*models.User, error) {
-	row := r.db.QueryRow("SELECT about, email, fullname, nickname, is_admin "+
+	row := r.db.QueryRow("SELECT about, email, fullname, nickname "+
 		"FROM users WHERE nickname = $1", username)
 
 	var user User
-	err := row.Scan(&user.About, &user.Email, &user.Fullname, &user.Nickname, &user.IsAdmin)
+	err := row.Scan(&user.About, &user.Email, &user.Fullname, &user.Nickname)
 
 	if err != nil {
 		return nil, userPkg.ErrUserNotFound
