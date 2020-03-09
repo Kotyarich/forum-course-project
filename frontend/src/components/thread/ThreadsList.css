@@ -1,0 +1,45 @@
+.threads-list__header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 10pt;
+    border-radius: 2px;
+    background: rgba(207, 207, 207, 0.78) linear-gradient(0deg, rgba(217, 217, 217, 0.78) 15%,
+    rgba(251, 251, 251, 0.6));
+}
+
+.threads__header {
+    color: #497289;
+    font-weight: bolder;
+    font-size: medium;
+}
+
+.threads-list__header__rating {
+    margin-right: 25pt;
+}
+
+.thread-creation {
+    margin-left: auto;
+    padding: 2pt;
+    border: 1px solid gray;
+    border-radius: 3px;
+    background-color: #efefef;
+    color: #497289;
+    font-weight: bold;
+    font-size: medium;
+    text-decoration: none;
+}
+
+.thread-creation:hover {
+    color: #2f4a59;
+    background-color: #cfefef;
+}
+
+.threads-list_empty {
+    margin-top: 20pt;
+    color: #497289;
+    width: 100%;
+    text-align: center;
+    font-size: large;
+    font-weight: bold;
+}

@@ -1,0 +1,27 @@
+.thread-item {
+    display: flex;
+    flex-direction: row;
+    border-bottom: 1px solid #cccccc;
+    border-top: 1px solid #cccccc;
+    padding: 10pt;
+}
+
+.thread-item__title {
+    color: #497289;
+    font-weight: bold;
+    font-size: large;
+    margin-bottom: 4pt;
+}
+
+.thread-item__started {
+    color: #666666;
+}
+
+.thread-item__author {
+    color: #555555;
+}
+
+.thread-item__numeric-info {
+    font-size: medium;
+    padding-top: 1pt;
+}
