@@ -245,8 +245,13 @@ func (h *ForumHandler) ForumThreadsHandler(writer http.ResponseWriter, r *http.R
 		limit = -1
 	}
 	sort := r.FormValue("desc") == "true"
+	offset, err := strconv.Atoi(r.FormValue("offset"))
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	threads, err := h.useCase.GetForumThreads(r.Context(), slug, since, limit, sort)
+	threads, err := h.useCase.GetForumThreads(r.Context(), slug, since, limit, offset, sort)
 	if err == forum.ErrForumNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
 		common.WriteData(writer, http.StatusNotFound, msg)

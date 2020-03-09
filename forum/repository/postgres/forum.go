@@ -157,15 +157,18 @@ func (r *ForumRepository) formGettingThreadsQuery(slug, since string, limit int,
 	}
 	if limit > 0 {
 		if since != "" {
-			query += "LIMIT $3"
+			query += "LIMIT $3 OFFSET $4"
 		} else {
-			query += "LIMIT $2"
+			query += "LIMIT $2 OFFSET $3"
 		}
+	} else {
+		query += "OFFSET $2"
 	}
+
 	return query
 }
 
-func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.Thread, error) {
+func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since string, limit, offset int, sort bool) ([]*models.Thread, error) {
 	var forum Forum
 	err := r.db.QueryRow("SELECT slug FROM forums WHERE slug = $1", slug).Scan(&forum.Slug)
 	if err != nil {
@@ -177,13 +180,13 @@ func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since strin
 	var rows *pgx.Rows
 
 	if since != "" && limit > 0 {
-		rows, err = r.db.Query(query, slug, since, limit)
+		rows, err = r.db.Query(query, slug, since, limit, offset)
 	} else if since != "" {
-		rows, err = r.db.Query(query, slug, since)
+		rows, err = r.db.Query(query, slug, since, offset)
 	} else if limit > 0 {
-		rows, err = r.db.Query(query, slug, limit)
+		rows, err = r.db.Query(query, slug, limit, offset)
 	} else {
-		rows, err = r.db.Query(query, slug)
+		rows, err = r.db.Query(query, slug, offset)
 	}
 	defer rows.Close()
 	if err != nil {

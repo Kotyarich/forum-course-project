@@ -11,7 +11,7 @@ type RepositoryForum interface {
 	GetForum(ctx context.Context, slug string) (*models.Forum, error)
 	DeleteForum(ctx context.Context, slug string) error
 	GetForums(ctx context.Context) ([]*models.Forum, error)
-	GetForumThreads(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.Thread, error)
+	GetForumThreads(ctx context.Context, slug, since string, limit, offset int, sort bool) ([]*models.Thread, error)
 	GetForumUsers(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.User, error)
 }
 

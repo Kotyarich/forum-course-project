@@ -46,8 +46,8 @@ func (u *ForumUseCase) GetForumDetails(ctx context.Context, slug string) (*model
 	return f, nil
 }
 
-func (u *ForumUseCase) GetForumThreads(ctx context.Context, slug, since string, limit int, sort bool) ([]*models.Thread, error) {
-	threads, err := u.forumRepo.GetForumThreads(ctx, slug, since, limit, sort)
+func (u *ForumUseCase) GetForumThreads(ctx context.Context, slug, since string, limit, offset int, sort bool) ([]*models.Thread, error) {
+	threads, err := u.forumRepo.GetForumThreads(ctx, slug, since, limit, offset, sort)
 	if err != nil {
 		return nil, err
 	}
