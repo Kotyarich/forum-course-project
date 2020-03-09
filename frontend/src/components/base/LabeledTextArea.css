@@ -1,0 +1,12 @@
+.form-group {
+    margin-top: 5pt;
+}
+
+.form-label {
+    width: 40%;
+    font-weight: bolder;
+}
+
+.form-group .form-textarea__container {
+    width: 60%;
+}

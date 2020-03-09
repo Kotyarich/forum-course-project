@@ -1,0 +1,38 @@
+.rating {
+    border-radius: 5px;
+    border: 1px solid #69a5c6;
+    padding: 4pt;
+    margin-right: 10pt;
+    background-color: rgba(135, 213, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.rating__votes {
+    font-size: large;
+    text-align: center;
+    margin-right: 5pt;
+    margin-bottom: 3pt;
+}
+
+.rating_positive {
+    color: #629737;
+}
+
+.rating_negative {
+    color: #ff1122;
+}
+
+.rating-up-button {
+    text-align: center;
+    width: 22pt;
+    height: 22pt;
+    padding: 0;
+    margin-right: 5pt;
+}
+
+.rating-down-button {
+    text-align: center;
+    width: 22pt;
+    height: 22pt;
+    padding: 0;
+}

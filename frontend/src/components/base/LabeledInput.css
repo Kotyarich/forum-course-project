@@ -1,0 +1,20 @@
+.form-group {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    margin-top: 5pt;
+}
+
+.form-group .form-input__container {
+    width: 60%;
+    padding-right: 6pt;
+}
+
+.form-label {
+    width: 40%;
+    text-align: end;
+    font-weight: bolder;
+    margin-right: 8pt;
+    margin-top: 4pt;
+}

@@ -1,0 +1,17 @@
+.button {
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 6px;
+    border: 1px solid gray;
+    padding: 5px 20px;
+    user-select: none;
+}
+
+.submit-button {
+    background-color: #69a5c6;
+}
+
+.submit-button:hover {
+    transition: 0.4s;
+    background-color: #497289;
+}

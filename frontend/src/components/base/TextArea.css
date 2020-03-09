@@ -1,0 +1,36 @@
+.form-textarea__container {
+    padding-right: 6pt;
+}
+
+.form-textarea {
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid #cfcfcf;
+    border-radius: 3px;
+    font-size: 10pt;
+    padding-left: 4pt;
+    resize: none;
+    transition: 0.4s;
+}
+
+
+.form-textarea:focus {
+    padding: 5px 10px 7px;
+    background-color: lightcyan;
+    transition: 0.4s;
+    border: 2px solid #3399FF;
+}
+
+.form-textarea.form-textarea-error {
+    transition: 0.5s;
+    border: 2px solid red;
+    background-color: lightgoldenrodyellow;
+    color: red;
+}
+
+.form-textarea__error {
+    margin-top: 3pt;
+    transition-timing-function: ease-out;
+    transition: 1s;
+    color: red;
+}
