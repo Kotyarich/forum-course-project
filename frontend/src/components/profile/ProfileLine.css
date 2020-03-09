@@ -1,0 +1,32 @@
+.profile-line {
+    width: 100%;
+    display: flex;
+    margin-top: 7pt;
+}
+
+.profile-line__name {
+    padding-top: 3pt;
+    margin-left: 20pt;
+    width: 22%;
+    height: 21pt;
+    font-weight: bold;
+    font-size: medium;
+}
+
+.profile-line__value {
+    padding-top: 3pt;
+    font-size: medium;
+    margin-left: 10pt;
+    margin-right: 40pt;
+    width: 80%;
+}
+
+.profile-line .form-input__container {
+    width: 78%;
+    margin-right: 20pt;
+}
+
+.profile-line .form-textarea__container {
+    width: 78%;
+    margin-right: 15pt;
+}

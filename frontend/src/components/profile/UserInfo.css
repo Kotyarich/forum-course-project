@@ -1,0 +1,44 @@
+.profile {
+    width: 400pt;
+    border-radius: 10px;
+    border: 1px solid #a7a7a7;
+    padding: 5pt;
+}
+
+.profile__title {
+    font-weight: bold;
+    font-size: x-large;
+    text-align: center;
+    margin-top: 5pt;
+}
+
+.profile__hr {
+    box-sizing: border-box;
+    width: 100%;
+    color: rgba(51, 153, 255, 0.7);
+}
+
+.profile__button-group {
+    width: 100%;
+    padding: 5pt;
+    display: flex;
+}
+
+.profile-change-button {
+    margin-left: 10pt;
+    background-color: #69a5c6;
+}
+
+.profile .submit-button {
+    margin-left: 6pt;
+}
+
+.profile-change-button:hover {
+    transition: 0.4s;
+    background-color: #497289;
+}
+
+.profile-cancel-button {
+    margin-left: 10pt;
+    margin-right: 26pt;
+}
