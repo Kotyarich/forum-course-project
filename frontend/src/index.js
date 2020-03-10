@@ -20,6 +20,8 @@ import ProfileStore from "./stores/ProfileStore";
 import ForumStore from "./stores/ForumStore";
 import ForumPage from "./pages/ForumPage";
 import ThreadStore from "./stores/ThreadStore";
+import ThreadPage from "./pages/ThreadPage";
+import PostStore from "./stores/PostStore";
 
 let registrationStore = new RegistrationStore();
 let loginStore = new LoginStore();
@@ -27,6 +29,7 @@ let userStore = new UserStore();
 let profileStore = new ProfileStore();
 let forumStore = new ForumStore();
 let threadStore = new ThreadStore();
+let postStore = new PostStore();
 
 @observer
 class App extends React.Component {
@@ -56,6 +59,11 @@ class App extends React.Component {
             <ForumPage slug={props.match.params.slug}
                        userStore={userStore}
                        threadStore={threadStore}/>
+          }/>
+          <Route path="/thread/:slug" render={(props) =>
+            <ThreadPage slug={props.match.params.slug}
+                        userStore={userStore}
+                        postStore={postStore}/>
           }/>
         </Switch>
       </div>

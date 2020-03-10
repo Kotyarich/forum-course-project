@@ -44,17 +44,17 @@ func (u *ThreadUseCase) ChangeThread(ctx context.Context, slug, title, message s
 	return thread, nil
 }
 
-func (u *ThreadUseCase) GetThreadPosts(ctx context.Context, slug string, limit, since int, desc bool, sort models.PostSortType) ([]*models.Post, error) {
+func (u *ThreadUseCase) GetThreadPosts(ctx context.Context, slug string, limit, offset, since int, desc bool, sort models.PostSortType) ([]*models.Post, error) {
 	var posts []*models.Post
 	var err error
 
 	switch sort {
 	case models.Flat:
-		posts, err = u.threadRepo.GetThreadPostsFlat(ctx, slug, limit, since, desc)
+		posts, err = u.threadRepo.GetThreadPostsFlat(ctx, slug, limit, offset, since, desc)
 	case models.Tree:
-		posts, err = u.threadRepo.GetThreadPostsTree(ctx, slug, limit, since, desc)
+		posts, err = u.threadRepo.GetThreadPostsTree(ctx, slug, limit, offset, since, desc)
 	case models.ParentTree:
-		posts, err = u.threadRepo.GetThreadPostsParentTree(ctx, slug, limit, since, desc)
+		posts, err = u.threadRepo.GetThreadPostsParentTree(ctx, slug, limit, offset, since, desc)
 	}
 
 	if err != nil {

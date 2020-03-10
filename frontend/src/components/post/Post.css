@@ -1,0 +1,41 @@
+.post {
+    margin-top: 5pt;
+    border: 1px solid #cfcfcf;
+    border-radius: 10px;
+    background-color: rgba(215, 215, 215, 0.32);
+    padding: 10pt;
+}
+
+.post__header {
+    display: flex;
+}
+
+.post__header__author {
+    margin-right: auto;
+    font-size: medium;
+    text-decoration: none;
+    color: #2f4a59;
+}
+
+.post__header__id {
+    color: gray;
+}
+
+.post__created {
+    padding-top: 2pt;
+    color: gray;
+    margin-right: auto;
+}
+
+.post__message {
+    margin-top: 10pt;
+    font-size: medium;
+}
+
+.post__footer {
+    display: flex;
+}
+
+.post__footer .answer__button {
+    margin: auto;
+}

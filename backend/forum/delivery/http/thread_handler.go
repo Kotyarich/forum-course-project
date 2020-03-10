@@ -15,7 +15,6 @@ type ThreadHandler struct {
 	useCase forum.UseCaseThread
 }
 
-
 func NewThreadHandler(useCase forum.UseCaseThread) *ThreadHandler {
 	return &ThreadHandler{
 		useCase: useCase,
@@ -23,39 +22,42 @@ func NewThreadHandler(useCase forum.UseCaseThread) *ThreadHandler {
 }
 
 type Thread struct {
-	Author    string    `json:"author"`
-	Slug      *string   `json:"slug"`
-	Votes     int       `json:"votes"`
-	Title     string    `json:"title"`
-	Created   time.Time `json:"created"`
-	ForumName string    `json:"forum"`
-	Id        int       `json:"id"`
-	Message   string    `json:"message"`
+	Author     string    `json:"author"`
+	Slug       *string   `json:"slug"`
+	Votes      int       `json:"votes"`
+	Title      string    `json:"title"`
+	Created    time.Time `json:"created"`
+	ForumName  string    `json:"forum"`
+	Id         int       `json:"id"`
+	Message    string    `json:"message"`
+	PostsCount int       `json:"posts"`
 }
 
 func threadToModel(t *Thread) *models.Thread {
 	return &models.Thread{
-		Author:    t.Author,
-		Slug:      t.Slug,
-		Title:     t.Title,
-		Message:   t.Message,
-		ForumName: t.ForumName,
-		Id:        t.Id,
-		Created:   t.Created,
-		Votes:     t.Votes,
+		Author:     t.Author,
+		Slug:       t.Slug,
+		Title:      t.Title,
+		Message:    t.Message,
+		ForumName:  t.ForumName,
+		Id:         t.Id,
+		Created:    t.Created,
+		Votes:      t.Votes,
+		PostsCount: t.PostsCount,
 	}
 }
 
 func modelToThread(t *models.Thread) *Thread {
 	return &Thread{
-		Author:    t.Author,
-		Slug:      t.Slug,
-		Title:     t.Title,
-		Message:   t.Message,
-		ForumName: t.ForumName,
-		Id:        t.Id,
-		Created:   t.Created,
-		Votes:     t.Votes,
+		Author:     t.Author,
+		Slug:       t.Slug,
+		Title:      t.Title,
+		Message:    t.Message,
+		ForumName:  t.ForumName,
+		Id:         t.Id,
+		Created:    t.Created,
+		Votes:      t.Votes,
+		PostsCount: t.PostsCount,
 	}
 }
 
@@ -236,6 +238,10 @@ func (h *ThreadHandler) GetThreadPosts(writer http.ResponseWriter, r *http.Reque
 	if err != nil {
 		limit = -1
 	}
+	offset, err := strconv.Atoi(r.FormValue("offset"))
+	if err != nil {
+		offset = 0
+	}
 	desc := r.FormValue("desc") == "true"
 	var sort models.PostSortType
 	switch r.FormValue("sort") {
@@ -247,7 +253,7 @@ func (h *ThreadHandler) GetThreadPosts(writer http.ResponseWriter, r *http.Reque
 		sort = models.ParentTree
 	}
 
-	posts, err := h.useCase.GetThreadPosts(r.Context(), slug, limit, since, desc, sort)
+	posts, err := h.useCase.GetThreadPosts(r.Context(), slug, limit, offset, since, desc, sort)
 	if err == forum.ErrThreadNotFound {
 		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
 		common.WriteData(writer, http.StatusNotFound, msg)

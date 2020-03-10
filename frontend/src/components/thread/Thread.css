@@ -1,0 +1,42 @@
+.thread {
+    display: flex;
+    background-color: #a7a7a7;
+    border: 1px solid #497289;
+    border-radius: 10px;
+}
+
+.thread__author {
+    padding: 10pt 10pt 10pt 10pt;
+    font-size: medium;
+    color: #2f4a59;
+}
+
+.thread__author__link {
+    text-decoration: none;
+}
+
+.thread__author__link:visited {
+    color: #2f4a59;
+}
+
+.thread__main {
+    background-color: rgb(196, 218, 247);
+    border-radius: 10px;
+    padding: 5pt 5pt 5pt 10pt;
+}
+
+.thread__title {
+    font-size: large;
+    font-weight: bold;
+    color: #2f4a59;
+}
+
+.thread__created {
+    padding-top: 5pt;
+    color: gray;
+}
+
+.thread__message {
+    padding-top: 5pt;
+    font-size: medium;
+}

@@ -21,9 +21,9 @@ type RepositoryThread interface {
 	GetThreadById(ctx context.Context, id int) (*models.Thread, error)
 	DeleteThread(ctx context.Context, id int) error
 	ChangeThread(ctx context.Context, slug, title, message string) (*models.Thread, error)
-	GetThreadPostsFlat(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error)
-	GetThreadPostsTree(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error)
-	GetThreadPostsParentTree(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error)
+	GetThreadPostsFlat(ctx context.Context, slug string, limit, offset, since int, desc bool) ([]*models.Post, error)
+	GetThreadPostsTree(ctx context.Context, slug string, limit, offset, since int, desc bool) ([]*models.Post, error)
+	GetThreadPostsParentTree(ctx context.Context, slug string, limit, offset, since int, desc bool) ([]*models.Post, error)
 	VoteForThread(ctx context.Context, slug string, vote *models.Vote) (*models.Thread, error)
 }
 

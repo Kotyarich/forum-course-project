@@ -18,6 +18,20 @@ class ThreadService {
     return response.json();
   };
 
+  getBySlug = async (slug) => {
+    const url = baseUrl + 'thread/' + slug + '/details';
+
+    const headers = new Headers();
+    const options = {
+      method: 'GET',
+      headers,
+    };
+
+    const request = new Request(url, options);
+    const response = await fetch(request);
+    return response.json();
+  };
+
   vote = async (threadSlug, nickname, vote) => {
     const url = baseUrl + 'thread/' + threadSlug + '/vote';
 

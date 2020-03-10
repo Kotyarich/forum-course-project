@@ -19,39 +19,42 @@ func NewThreadRepository() *ThreadRepository {
 }
 
 type Thread struct {
-	Author    string
-	Slug      *string
-	Votes     int
-	Title     string
-	Created   time.Time
-	ForumName string
-	Id        int
-	Message   string
+	Author     string
+	Slug       *string
+	Votes      int
+	Title      string
+	Created    time.Time
+	ForumName  string
+	Id         int
+	Message    string
+	PostsCount int
 }
 
 func toPostgresThread(thread *models.Thread) *Thread {
 	return &Thread{
-		Id:        thread.Id,
-		Author:    thread.Author,
-		Slug:      thread.Slug,
-		Votes:     thread.Votes,
-		Title:     thread.Title,
-		Created:   thread.Created,
-		ForumName: thread.ForumName,
-		Message:   thread.Message,
+		Id:         thread.Id,
+		Author:     thread.Author,
+		Slug:       thread.Slug,
+		Votes:      thread.Votes,
+		Title:      thread.Title,
+		Created:    thread.Created,
+		ForumName:  thread.ForumName,
+		Message:    thread.Message,
+		PostsCount: thread.PostsCount,
 	}
 }
 
 func ToModelThread(thread *Thread) *models.Thread {
 	return &models.Thread{
-		Id:        thread.Id,
-		Author:    thread.Author,
-		Slug:      thread.Slug,
-		Votes:     thread.Votes,
-		Title:     thread.Title,
-		Created:   thread.Created,
-		ForumName: thread.ForumName,
-		Message:   thread.Message,
+		Id:         thread.Id,
+		Author:     thread.Author,
+		Slug:       thread.Slug,
+		Votes:      thread.Votes,
+		Title:      thread.Title,
+		Created:    thread.Created,
+		ForumName:  thread.ForumName,
+		Message:    thread.Message,
+		PostsCount: thread.PostsCount,
 	}
 }
 
@@ -118,6 +121,19 @@ func (r *ThreadRepository) createPost(post *models.Post) error {
 	return nil
 }
 
+func (r *ThreadRepository) getThreadPostsCount(ctx context.Context, id int) (int, error) {
+	postsCount := 0
+
+	row := r.db.QueryRow("SELECT count(*) FROM posts WHERE tid = $1", id)
+	err := row.Scan(&postsCount)
+
+	if err != nil {
+		return -1, err
+	}
+
+	return postsCount, nil
+}
+
 func (r *ThreadRepository) GetThreadBySlug(ctx context.Context, slug string) (*models.Thread, error) {
 	row := r.db.QueryRow("SELECT * FROM threads WHERE slug = $1", slug)
 
@@ -127,6 +143,12 @@ func (r *ThreadRepository) GetThreadBySlug(ctx context.Context, slug string) (*m
 	if err != nil {
 		return nil, forum.ErrThreadNotFound
 	}
+
+	postsCount, err := r.getThreadPostsCount(ctx, thread.Id)
+	if err != nil {
+		return nil, err
+	}
+	thread.PostsCount = postsCount
 
 	return ToModelThread(&thread), nil
 }
@@ -140,6 +162,13 @@ func (r *ThreadRepository) GetThreadById(ctx context.Context, id int) (*models.T
 	if err != nil {
 		return nil, forum.ErrThreadNotFound
 	}
+
+
+	postsCount, err := r.getThreadPostsCount(ctx, thread.Id)
+	if err != nil {
+		return nil, err
+	}
+	thread.PostsCount = postsCount
 
 	return ToModelThread(&thread), nil
 }
@@ -185,17 +214,17 @@ func (r *ThreadRepository) ChangeThread(ctx context.Context, slug, title, messag
 	return ToModelThread(&thread), nil
 }
 
-func (r *ThreadRepository) getPostsRows(query string, threadId, since, limit int) (*pgx.Rows, error) {
+func (r *ThreadRepository) getPostsRows(query string, threadId, since, limit, offset int) (*pgx.Rows, error) {
 	var rows *pgx.Rows
 	var err error
 	if since >= 0 && limit > 0 {
-		rows, err = r.db.Query(query, threadId, since, limit)
+		rows, err = r.db.Query(query, threadId, since, limit, offset)
 	} else if since >= 0 {
-		rows, err = r.db.Query(query, threadId, since)
+		rows, err = r.db.Query(query, threadId, since, offset)
 	} else if limit > 0 {
-		rows, err = r.db.Query(query, threadId, limit)
+		rows, err = r.db.Query(query, threadId, limit, offset)
 	} else {
-		rows, err = r.db.Query(query, threadId)
+		rows, err = r.db.Query(query, threadId, offset)
 	}
 
 	if err != nil {
@@ -233,12 +262,12 @@ func (r *ThreadRepository) checkThread(slug string) (int, error) {
 	return id, nil
 }
 
-func (r *ThreadRepository) GetThreadPostsFlat(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error) {
+func (r *ThreadRepository) GetThreadPostsFlat(ctx context.Context, slug string, limit, offset, since int, desc bool) ([]*models.Post, error) {
 	threadId, err := r.checkThread(slug)
 	if err != nil {
 		return nil, err
 	}
-	// form query
+
 	query := "SELECT id, author, created, forum, isEdited, message, parent, tid " +
 		"FROM posts WHERE tid = $1 "
 	if since >= 0 {
@@ -254,13 +283,15 @@ func (r *ThreadRepository) GetThreadPostsFlat(ctx context.Context, slug string, 
 	}
 	if limit > 0 {
 		if since >= 0 {
-			query += "LIMIT $3"
+			query += "LIMIT $3 OFFSET $4 "
 		} else {
-			query += "LIMIT $2"
+			query += "LIMIT $2 OFFSET $3"
 		}
+	} else {
+		query += "OFFSET $2 "
 	}
 
-	rows, err := r.getPostsRows(query, threadId, since, limit)
+	rows, err := r.getPostsRows(query, threadId, since, limit, offset)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -269,7 +300,7 @@ func (r *ThreadRepository) GetThreadPostsFlat(ctx context.Context, slug string, 
 	return r.postRowsToModelsArray(rows)
 }
 
-func (r *ThreadRepository) GetThreadPostsTree(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error) {
+func (r *ThreadRepository) GetThreadPostsTree(ctx context.Context, slug string, limit, offset, since int, desc bool) ([]*models.Post, error) {
 	threadId, err := r.checkThread(slug)
 	if err != nil {
 		return nil, err
@@ -290,13 +321,15 @@ func (r *ThreadRepository) GetThreadPostsTree(ctx context.Context, slug string, 
 	}
 	if limit > 0 {
 		if since >= 0 {
-			query += "LIMIT $3"
+			query += "LIMIT $3 OFFSET $4 "
 		} else {
-			query += "LIMIT $2"
+			query += "LIMIT $2 OFFSET $3 "
 		}
+	} else {
+		query += "OFFSET $2 "
 	}
 
-	rows, err := r.getPostsRows(query, threadId, since, limit)
+	rows, err := r.getPostsRows(query, threadId, since, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -305,7 +338,7 @@ func (r *ThreadRepository) GetThreadPostsTree(ctx context.Context, slug string, 
 	return r.postRowsToModelsArray(rows)
 }
 
-func (r *ThreadRepository) GetThreadPostsParentTree(ctx context.Context, slug string, limit, since int, desc bool) ([]*models.Post, error) {
+func (r *ThreadRepository) GetThreadPostsParentTree(ctx context.Context, slug string, limit, offset, since int, desc bool) ([]*models.Post, error) {
 	threadId, err := r.checkThread(slug)
 	if err != nil {
 		return nil, err
@@ -326,10 +359,12 @@ func (r *ThreadRepository) GetThreadPostsParentTree(ctx context.Context, slug st
 	}
 	if limit > 0 {
 		if since >= 0 {
-			query += "LIMIT $3 "
+			query += "LIMIT $3 OFFSET $4 "
 		} else {
-			query += "LIMIT $2 "
+			query += "LIMIT $2 OFFSET $3 "
 		}
+	} else {
+		query += "OFFSET $2"
 	}
 	query += ") SELECT posts.id, author, created, forum, isEdited, message, parent, tid " +
 		"FROM posts JOIN roots ON roots.id = rootId "
@@ -341,7 +376,7 @@ func (r *ThreadRepository) GetThreadPostsParentTree(ctx context.Context, slug st
 		query += " slug"
 	}
 
-	rows, err := r.getPostsRows(query, threadId, since, limit)
+	rows, err := r.getPostsRows(query, threadId, since, limit, offset)
 	if err != nil {
 		return nil, err
 	}

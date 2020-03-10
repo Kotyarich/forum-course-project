@@ -30,11 +30,11 @@
 a.nav-link:link {
     color: #497289;
 }
-/* A link that has been visited */
+
 a.nav-link:visited {
     color: #497289;
 }
-/* A link that is hovered on */
+
 a.nav-link:hover {
     color: #2f4a59;
 }
