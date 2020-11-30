@@ -3,12 +3,14 @@ package http
 import (
 	"dbProject/common"
 	"dbProject/forum"
-	"github.com/dimfeld/httptreemux"
+	"github.com/labstack/echo/v4"
 )
 
-func registerHTTPForumEndpoints(router *httptreemux.TreeMux, uc forum.UseCaseForum) {
+func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	handler := NewForumHandler(uc)
 
+	router.POST("/api/forum/create",
+		common.CORSMiddlware(handler.ForumCreateHandler))
 	router.POST("/api/forum/:slug/create",
 		common.CORSMiddlware(handler.ThreadCreateHandler))
 	router.GET("/api/forums",
@@ -19,11 +21,9 @@ func registerHTTPForumEndpoints(router *httptreemux.TreeMux, uc forum.UseCaseFor
 		common.CORSMiddlware(handler.ForumThreadsHandler))
 	router.GET("/api/forum/:slug/users",
 		common.CORSMiddlware(handler.ForumUsersHandler))
-	router.POST("/api/forum/create",
-		common.CORSMiddlware(handler.ForumCreateHandler))
 }
 
-func registerHTTPThreadEndpoints(router *httptreemux.TreeMux, uc forum.UseCaseThread) {
+func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	handler := NewThreadHandler(uc)
 
 	router.POST("/api/thread/:slug/create",
@@ -38,7 +38,7 @@ func registerHTTPThreadEndpoints(router *httptreemux.TreeMux, uc forum.UseCaseTh
 		common.CORSMiddlware(handler.ThreadVoteHandler))
 }
 
-func registerHTTPPostEndpoints(router *httptreemux.TreeMux, uc forum.UseCasePost) {
+func registerHTTPPostEndpoints(router *echo.Echo, uc forum.UseCasePost) {
 	handler := NewPostHandler(uc)
 
 	router.GET("/api/post/:id/details",
@@ -47,7 +47,7 @@ func registerHTTPPostEndpoints(router *httptreemux.TreeMux, uc forum.UseCasePost
 		common.CORSMiddlware(handler.ChangePostHandler))
 }
 
-func registerHTTPServiceEndpoints(router *httptreemux.TreeMux, uc forum.UseCaseService) {
+func registerHTTPServiceEndpoints(router *echo.Echo, uc forum.UseCaseService) {
 	handler := NewServiceHandler(uc)
 
 	router.POST("/api/service/clear",
@@ -56,7 +56,7 @@ func registerHTTPServiceEndpoints(router *httptreemux.TreeMux, uc forum.UseCaseS
 		common.CORSMiddlware(handler.StatusHandler))
 }
 
-func RegisterHTTPEndpoints(router *httptreemux.TreeMux, uc forum.UseCase) {
+func RegisterHTTPEndpoints(router *echo.Echo, uc forum.UseCase) {
 	registerHTTPForumEndpoints(router, uc.ForumUseCase)
 	registerHTTPThreadEndpoints(router, uc.ThreadUseCase)
 	registerHTTPPostEndpoints(router, uc.PostUseCase)

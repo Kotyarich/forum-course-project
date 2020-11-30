@@ -1,10 +1,9 @@
 package http
 
 import (
-	"dbProject/common"
 	"dbProject/forum"
 	"dbProject/models"
-	"encoding/json"
+	"github.com/labstack/echo/v4"
 	"net/http"
 )
 
@@ -20,14 +19,13 @@ func NewServiceHandler(useCase forum.UseCaseService) *ServiceHandler {
 }
 
 
-func (h *ServiceHandler) ClearHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	err := h.useCase.Clear(request.Context())
+func (h *ServiceHandler) ClearHandler(c echo.Context) error {
+	err := h.useCase.Clear(c.Request().Context())
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	writer.WriteHeader(http.StatusOK)
+	return c.String(http.StatusOK, "")
 }
 
 type Status struct {
@@ -46,17 +44,11 @@ func modelToStatus(status *models.Status) Status {
 	}
 }
 
-func (h *ServiceHandler) StatusHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	stats, err := h.useCase.Status(request.Context())
+func (h *ServiceHandler) StatusHandler(c echo.Context) error {
+	stats, err := h.useCase.Status(c.Request().Context())
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := json.Marshal(modelToStatus(stats))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, modelToStatus(stats))
 }

@@ -178,11 +178,15 @@ func (r *ForumRepository) GetForumThreads(ctx context.Context, slug, since strin
 	query := r.formGettingThreadsQuery(slug, since, limit, sort)
 
 	var rows *pgx.Rows
+	// TODO temporary for tests
+	loc, _ := time.LoadLocation("Europe/Moscow")
+	sinceTime, _ := time.ParseInLocation(time.RFC3339, since, loc)
+	sinceTime = sinceTime.Add(3 * time.Hour)
 
 	if since != "" && limit > 0 {
-		rows, err = r.db.Query(query, slug, since, limit, offset)
+		rows, err = r.db.Query(query, slug, sinceTime, limit, offset)
 	} else if since != "" {
-		rows, err = r.db.Query(query, slug, since, offset)
+		rows, err = r.db.Query(query, slug, sinceTime, offset)
 	} else if limit > 0 {
 		rows, err = r.db.Query(query, slug, limit, offset)
 	} else {

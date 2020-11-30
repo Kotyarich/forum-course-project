@@ -3,13 +3,12 @@ package http
 import (
 	"dbProject/common"
 	"dbProject/user"
-	"github.com/dimfeld/httptreemux"
+	"github.com/labstack/echo/v4"
 )
 
-func RegisterHTTPEndpoints(router *httptreemux.TreeMux, uc user.UseCase) {
+func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	handler := NewHandler(uc)
 
-	router.OptionsHandler = common.CORSHandler
 
 	router.GET("/api/user/signout",
 		common.CORSMiddlware(

@@ -2,11 +2,9 @@ package http
 
 import (
 	"context"
-	"dbProject/common"
 	"dbProject/models"
 	"dbProject/user"
-	"encoding/json"
-	"io/ioutil"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"time"
 )
@@ -44,15 +42,14 @@ type signInInput struct {
 	Password string `json:"password"`
 }
 
-func (h *Handler) SignOutHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	cookie, err := request.Cookie("Auth")
+func (h *Handler) SignOutHandler(c echo.Context) error {
+	cookie, err := c.Cookie("Auth")
 	if err != nil {
-		writer.WriteHeader(http.StatusBadRequest)
-		return
+		return c.String(http.StatusBadRequest, "")
 	}
 
-	err = h.useCase.SignOut(request.Context(), cookie.Value)
-	http.SetCookie(writer, &http.Cookie{
+	err = h.useCase.SignOut(c.Request().Context(), cookie.Value)
+	c.SetCookie(&http.Cookie{
 		Name:     "Auth",
 		Expires:  time.Now().Add(-24 * time.Hour),
 		HttpOnly: true,
@@ -60,31 +57,22 @@ func (h *Handler) SignOutHandler(writer http.ResponseWriter, request *http.Reque
 	})
 
 	if err != nil {
-		writer.WriteHeader(http.StatusInternalServerError)
+		return c.String(http.StatusInternalServerError, "")
 	} else {
-		writer.WriteHeader(http.StatusOK)
+		return c.String(http.StatusOK, "")
 	}
 }
 
-func (h *Handler) UserAuthHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	// read body
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	// parse body
+func (h *Handler) UserAuthHandler(c echo.Context) error {
 	var input signInInput
-	err = json.Unmarshal(body, &input)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
-	ctx := context.WithValue(request.Context(), "UserAgent", request.UserAgent())
+	ctx := context.WithValue(c.Request().Context(), "UserAgent", c.Request().UserAgent())
 
 	u, token, err := h.useCase.SignIn(ctx, input.Nickname, input.Password)
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusForbidden)
-		return
+		return c.String(http.StatusForbidden, err.Error())
 	}
 
 	cookie := &http.Cookie{
@@ -95,134 +83,110 @@ func (h *Handler) UserAuthHandler(writer http.ResponseWriter, request *http.Requ
 		Path:     "/",
 		Domain:   "localhost",
 	}
-	http.SetCookie(writer, cookie)
+	c.SetCookie(cookie)
 
-	data, err := json.Marshal(UserToUserOutput(u))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK,UserToUserOutput(u))
 }
 
-func (h *Handler) UserCheckAuthHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	u := request.Context().Value("user")
+func (h *Handler) UserCheckAuthHandler(c echo.Context) error {
+	u := c.Request().Context().Value("user")
 	if u == nil {
-		msg, _ := json.Marshal(map[string]string{"error": "not authorised"})
-		common.WriteData(writer, http.StatusForbidden, msg)
-		return
+		msg := map[string]string{"error": "not authorised"}
+		return c.JSON(http.StatusForbidden, msg)
 	}
 
-	data, err := json.Marshal(UserToUserOutput(u.(*models.User)))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, UserToUserOutput(u.(*models.User)))
 }
 
-func (h *Handler) UserGetHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	nickname := ps["nickname"]
-	u, err := h.useCase.GetProfile(request.Context(), nickname)
+func (h *Handler) UserGetHandler(c echo.Context) error {
+
+	// swagger:route GET /pets pets users listPets
+	//
+	// Lists pets filtered by some parameters.
+	//
+	// This will show all available pets by default.
+	// You can get the pets that are out of stock
+	//
+	//     Consumes:
+	//     - application/json
+	//     - application/x-protobuf
+	//
+	//     Produces:
+	//     - application/json
+	//     - application/x-protobuf
+	//
+	//     Schemes: http, https, ws, wss
+	//
+	//     Deprecated: true
+	//
+	//     Security:
+	//       api_key:
+	//       oauth: read, write
+	//
+	//     Responses:
+	//       default: genericError
+	//       200: someResponse
+	//       422: validationError
+	nickname := c.Param("nickname")
+	u, err := h.useCase.GetProfile(c.Request().Context(), nickname)
 	if err != nil {
 		if err == user.ErrUserNotFound {
-			msg, _ := json.Marshal(map[string]string{"message": "404"})
-			common.WriteData(writer, http.StatusNotFound, msg)
-			return
+			msg := map[string]string{"message": "404"}
+			return c.JSON(http.StatusNotFound, msg)
 		} else {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
+			return c.String(http.StatusInternalServerError, err.Error())
 		}
 	}
 
-	data, err := json.Marshal(UserToUserOutput(u))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, UserToUserOutput(u))
 }
 
-func (h *Handler) UserPostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	nickname := ps["nickname"]
+func (h *Handler) UserPostHandler(c echo.Context) error {
+	nickname := c.Param("nickname")
 
-	// read body
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	// parse body
 	var input userInput
-	err = json.Unmarshal(body, &input)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	input.Nickname = nickname
 
-	newUser, err := h.useCase.ChangeProfile(request.Context(), userInputToModel(input))
+	newUser, err := h.useCase.ChangeProfile(c.Request().Context(), userInputToModel(input))
 
 	if err == user.ErrUserAlreadyExists {
-		msg, _ := json.Marshal(map[string]string{"message": "conflict"})
-		common.WriteData(writer, http.StatusConflict, msg)
-		return
+		msg := map[string]string{"message": "conflict"}
+		return c.JSON(http.StatusConflict, msg)
 	} else if err == user.ErrUserNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "User not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := json.Marshal(UserToUserOutput(newUser))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	common.WriteData(writer, http.StatusOK, data)
-	return
+	return c.JSON(http.StatusOK, UserToUserOutput(newUser))
 }
 
-func (h *Handler) UserCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	if request.Method == http.MethodOptions {
-		writer.Header().Set("content-type", "application/json")
-		writer.WriteHeader(http.StatusOK)
-		return
-	}
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+func (h *Handler) UserCreateHandler(c echo.Context) error {
+	if c.Request().Method == http.MethodOptions {
+		c.Request().Header.Set("content-type", "application/json")
+		return c.String(http.StatusOK, "")
 	}
 
 	u := userInput{}
-	if err = json.Unmarshal(body, &u); err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+	if err := c.Bind(&u); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 	model := userInputToModel(u)
-	model.Nickname = ps["nickname"]
-	ctx := context.WithValue(request.Context(), "UserAgent", request.UserAgent())
+	model.Nickname = c.Param("nickname")
+	ctx := context.WithValue(c.Request().Context(), "UserAgent", c.Request().UserAgent())
 	conflicts, token, err := h.useCase.SignUp(ctx, model)
 	if err != nil {
 		if conflicts == nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
+			return c.String(http.StatusInternalServerError, err.Error())
 		}
 
-		result, err := UsersToJsonArray(conflicts)
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		writer.Header().Set("content-type", "application/json")
-		writer.WriteHeader(http.StatusConflict)
-		_, _ = writer.Write(result)
-		return
+		c.Request().Header.Set("content-type", "application/json")
+		return c.JSON(http.StatusConflict, UsersToJsonArray(conflicts))
 	}
 
 	cookie := &http.Cookie{
@@ -230,16 +194,10 @@ func (h *Handler) UserCreateHandler(writer http.ResponseWriter, request *http.Re
 		Value:    token,
 		HttpOnly: true,
 	}
-	http.SetCookie(writer, cookie)
+	c.SetCookie(cookie)
 
-	data, err := json.Marshal(UserToUserOutput(model))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	writer.Header().Set("content-type", "application/json")
-	writer.WriteHeader(http.StatusCreated)
-	_, _ = writer.Write(data)
+	c.Request().Header.Set("content-type", "application/json")
+	return c.JSON(http.StatusCreated, UserToUserOutput(model))
 }
 
 type UserOutput struct {
@@ -258,22 +216,11 @@ func UserToUserOutput(user *models.User) *UserOutput {
 	}
 }
 
-func UsersToJsonArray(users []*models.User) ([]byte, error) {
-	result := []byte{'['}
+func UsersToJsonArray(users []*models.User) []*UserOutput {
+	var result []*UserOutput
 	for i := 0; i < len(users); i++ {
-		if len(result) > 1 {
-			result = append(result, ',')
-		}
-
-		userOutput := UserToUserOutput(users[i])
-		data, err := json.Marshal(userOutput)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, data...)
+		result = append(result, UserToUserOutput(users[i]))
 	}
-	result = append(result, ']')
 
-	return result, nil
+	return result
 }

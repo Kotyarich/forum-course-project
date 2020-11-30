@@ -1,11 +1,9 @@
 package http
 
 import (
-	"dbProject/common"
 	"dbProject/forum"
 	userHttp "dbProject/user/delivery/http"
-	"encoding/json"
-	"io/ioutil"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,44 +25,26 @@ type postInput struct {
 	Message string `json:"message"`
 }
 
-func (h *PostHandler) ChangePostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	id, err := strconv.Atoi(ps["id"])
+func (h *PostHandler) ChangePostHandler(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		http.Error(writer, "wrong ID", http.StatusBadRequest)
-		return
-	}
-
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusBadRequest, "wrong ID")
 	}
 
 	var input postInput
-	err = json.Unmarshal(body, &input)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	post, err := h.useCase.ChangePost(request.Context(), id, input.Message)
+	post, err := h.useCase.ChangePost(c.Request().Context(), id, input.Message)
 	if err == forum.ErrPostNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Post not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Post not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := json.Marshal(ModelToPost(post))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, ModelToPost(post))
 }
 
 type DetailedInfo struct {
@@ -74,14 +54,13 @@ type DetailedInfo struct {
 	ForumInfo  *ForumOutput         `json:"forum,omitempty"`
 }
 
-func (h *PostHandler) GetPostHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	id, err := strconv.Atoi(ps["id"])
+func (h *PostHandler) GetPostHandler(c echo.Context) error {
+	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		http.Error(writer, "wrong ID", http.StatusBadRequest)
-		return
+		return c.String(http.StatusBadRequest, "wrong ID")
 	}
 
-	related := strings.Split(request.FormValue("related"), ",")
+	related := strings.Split(c.QueryParam("related"), ",")
 	u := false
 	f := false
 	t := false
@@ -96,26 +75,21 @@ func (h *PostHandler) GetPostHandler(writer http.ResponseWriter, request *http.R
 		}
 	}
 
-	details, err := h.useCase.GetPostInfo(request.Context(), id, u, t, f)
+	details, err := h.useCase.GetPostInfo(c.Request().Context(), id, u, t, f)
 	if err == forum.ErrPostNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Post not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Post not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrThreadNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Thread not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrForumNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Forum not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrUserNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "User not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	info := new(DetailedInfo)
 	info.PostInfo = *ModelToPost(&details.PostInfo)
@@ -129,9 +103,5 @@ func (h *PostHandler) GetPostHandler(writer http.ResponseWriter, request *http.R
 		info.ForumInfo = forumToOutputFormat(details.ForumInfo)
 	}
 
-	data, err := json.Marshal(info)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, info)
 }

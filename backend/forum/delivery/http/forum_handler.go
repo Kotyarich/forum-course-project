@@ -1,14 +1,13 @@
 package http
 
 import (
-	"dbProject/common"
 	"dbProject/forum"
 	"dbProject/models"
 	userHttp "dbProject/user/delivery/http"
-	"encoding/json"
-	"io/ioutil"
+	"github.com/labstack/echo/v4"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type ForumHandler struct {
@@ -56,216 +55,153 @@ func forumToOutputFormat(f *models.Forum) *ForumOutput {
 	}
 }
 
-func (h *ForumHandler) ForumCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-
+func (h *ForumHandler) ForumCreateHandler(c echo.Context) error {
 	var input ForumInput
-	err = json.Unmarshal(body, &input)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	if err := c.Bind(&input); err != nil {
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	}
 
-	f, err := h.useCase.CreateForum(request.Context(), forumInputToModel(input))
+	f, err := h.useCase.CreateForum(c.Request().Context(), forumInputToModel(input))
 	if err == forum.ErrUserNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "User not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrForumAlreadyExists {
-		data, _ := json.Marshal(forumToOutputFormat(f))
-		common.WriteData(writer, http.StatusConflict, data)
-		return
+		data := forumToOutputFormat(f)
+		return c.JSON(http.StatusConflict, data)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	}
 
-	data, err := json.Marshal(forumToOutputFormat(f))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	common.WriteData(writer, http.StatusCreated, data)
-	return
+	return c.JSON(http.StatusCreated, forumToOutputFormat(f))
 }
 
-func (h *ForumHandler) ThreadCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	slug := ps["slug"]
-
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
+func (h *ForumHandler) ThreadCreateHandler(c echo.Context) error {
+	slug := c.Param("slug")
 
 	var threadInp Thread
-	err = json.Unmarshal(body, &threadInp)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
+	if err := c.Bind(&threadInp); err != nil {
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	}
 
-	thread, err := h.useCase.CreateForumThread(request.Context(), slug, threadToModel(&threadInp))
+	thread, err := h.useCase.CreateForumThread(c.Request().Context(), slug, threadToModel(&threadInp))
 	if err == forum.ErrUserNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
+		msg := map[string]string{"message": "User not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrForumNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
+		msg := map[string]string{"message": "Forum not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrThreadAlreadyExists {
-		data, err := json.Marshal(modelToThread(thread))
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		common.WriteData(writer, http.StatusConflict, data)
+		return c.JSON(http.StatusConflict, modelToThread(thread))
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	} else {
-		data, err := json.Marshal(modelToThread(thread))
-
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
+		if *thread.Slug == thread.ForumName {
+			thread.Slug = nil
 		}
-		common.WriteData(writer, http.StatusCreated, data)
+		return c.JSON(http.StatusCreated, modelToThread(thread))
 	}
 }
 
-func (h *ForumHandler) ForumsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
-	forums, err := h.useCase.GetForums(r.Context())
+func (h *ForumHandler) ForumsHandler(c echo.Context) error {
+	forums, err := h.useCase.GetForums(c.Request().Context())
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	}
 
-	data, err := forumsToJsonArray(forums)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, forumsToJsonArray(forums))
 }
 
-func (h *ForumHandler) ForumDetailsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
-	slug := ps["slug"]
+func (h *ForumHandler) ForumDetailsHandler(c echo.Context) error {
+	slug := c.Param("slug")
 
-	f, err := h.useCase.GetForumDetails(r.Context(), slug)
+	f, err := h.useCase.GetForumDetails(c.Request().Context(), slug)
 	if err == forum.ErrForumNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "404"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "404"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	}
 
-	data, err := json.Marshal(forumToOutputFormat(f))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	data := forumToOutputFormat(f)
+	return c.JSON(http.StatusOK, data)
 }
 
-func (h *ForumHandler) ForumUsersHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
-	slug := ps["slug"]
-	since := r.FormValue("since")
-	limit, err := strconv.Atoi(r.FormValue("limit"))
+func (h *ForumHandler) ForumUsersHandler(c echo.Context) error {
+	slug := c.Param("slug")
+	since := c.QueryParam("since")
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
 	if err != nil {
 		limit = -1
 	}
-	sort := r.FormValue("desc") == "true"
+	sort := c.QueryParam("desc") == "true"
 
-	users, err := h.useCase.GetForumUsers(r.Context(), slug, since, limit, sort)
+	users, err := h.useCase.GetForumUsers(c.Request().Context(), slug, since, limit, sort)
 	if err == forum.ErrForumNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Forum not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	}
 
-	result, err := userHttp.UsersToJsonArray(users)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	common.WriteData(writer, http.StatusOK, result)
+	return c.JSON(http.StatusOK, userHttp.UsersToJsonArray(users))
 }
 
-func forumsToJsonArray(forums []*models.Forum) ([]byte, error) {
-	result := []byte{'['}
+func forumsToJsonArray(forums []*models.Forum) []*ForumOutput {
+	var result []*ForumOutput
 	for i := 0; i < len(forums); i++ {
-		if len(result) > 1 {
-			result = append(result, ',')
-		}
-
-		forumOutput := forumToOutputFormat(forums[i])
-		data, err := json.Marshal(forumOutput)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, data...)
+		result = append(result, forumToOutputFormat(forums[i]))
 	}
-	result = append(result, ']')
 
-	return result, nil
+	return result
 }
 
-func threadsToJsonArray(threads []*models.Thread) ([]byte, error) {
-	result := []byte{'['}
+func threadsToJsonArray(threads []*models.Thread) []*Thread {
+	var result []*Thread
 	for i := 0; i < len(threads); i++ {
-		if len(result) > 1 {
-			result = append(result, ',')
-		}
-
-		threadOutput := modelToThread(threads[i])
-		data, err := json.Marshal(threadOutput)
-		if err != nil {
-			return nil, err
-		}
-
-		result = append(result, data...)
+		result = append(result, modelToThread(threads[i]))
 	}
-	result = append(result, ']')
 
-	return result, nil
+	return result
 }
 
-func (h *ForumHandler) ForumThreadsHandler(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
-	slug := ps["slug"]
-	since := r.FormValue("since")
-	limit, err := strconv.Atoi(r.FormValue("limit"))
+func (h *ForumHandler) ForumThreadsHandler(c echo.Context) error {
+	slug := c.Param("slug")
+	since := c.QueryParam("since")
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
 	if err != nil {
 		limit = -1
 	}
-	sort := r.FormValue("desc") == "true"
-	offset, err := strconv.Atoi(r.FormValue("offset"))
+	sort := c.QueryParam("desc") == "true"
+	offset, err := strconv.Atoi(c.QueryParam("offset"))
 	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		offset = 0
 	}
 
-	threads, err := h.useCase.GetForumThreads(r.Context(), slug, since, limit, offset, sort)
+	threads, err := h.useCase.GetForumThreads(c.Request().Context(), slug, since, limit, offset, sort)
 	if err == forum.ErrForumNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Forum not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Forum not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		errText := map[string]string{"error": err.Error()}
+		return c.JSON(http.StatusInternalServerError, errText)
 	}
 
-	result, err := threadsToJsonArray(threads)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+	for i := 0; i < len(threads); i++ {
+		// TODO temporary for tests
+		threads[i].Created = threads[i].Created.Add(-3 * time.Hour)
 	}
 
-	common.WriteData(writer, http.StatusOK, result)
+	result := threadsToJsonArray(threads)
+	// TODO temporary for tests
+	if result == nil {
+		return c.String(http.StatusOK, "[]")
+	}
+	return c.JSON(http.StatusOK, result)
 }

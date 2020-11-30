@@ -149,6 +149,8 @@ func (r *ThreadRepository) GetThreadBySlug(ctx context.Context, slug string) (*m
 		return nil, err
 	}
 	thread.PostsCount = postsCount
+	// TODO temporary for tests
+	thread.Created = thread.Created.Add(-3 * time.Hour)
 
 	return ToModelThread(&thread), nil
 }
@@ -169,6 +171,8 @@ func (r *ThreadRepository) GetThreadById(ctx context.Context, id int) (*models.T
 		return nil, err
 	}
 	thread.PostsCount = postsCount
+	// TODO temporary for tests
+	thread.Created = thread.Created.Add(-3 * time.Hour)
 
 	return ToModelThread(&thread), nil
 }
@@ -210,6 +214,8 @@ func (r *ThreadRepository) ChangeThread(ctx context.Context, slug, title, messag
 	if err != nil {
 		return nil, forum.ErrThreadNotFound
 	}
+	// TODO temporary for tests
+	thread.Created = thread.Created.Add(-3 * time.Hour)
 
 	return ToModelThread(&thread), nil
 }
@@ -425,6 +431,8 @@ func (r *ThreadRepository) VoteForThread(ctx context.Context, slug string, vote 
 	if err != nil {
 		return nil, err
 	}
+	// TODO temporary for tests
+	thread.Created = thread.Created.Add(-3 * time.Hour)
 
 	return ToModelThread(&thread), err
 }

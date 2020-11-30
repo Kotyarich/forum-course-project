@@ -1,10 +1,10 @@
 package http
 
 import (
-	"dbProject/common"
 	"dbProject/forum"
 	"dbProject/models"
 	"encoding/json"
+	"github.com/labstack/echo/v4"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -79,19 +79,19 @@ type Post struct {
 	Author    string    `json:"author"`
 	Created   time.Time `json:"created"`
 	ForumName string    `json:"forum"`
-	Id        int       `json:"id"`
+	Pk        int       `json:"id"`
 	IsEdited  bool      `json:"isEdited"`
 	Message   string    `json:"message"`
 	Parent    int       `json:"parent"`
 	Tid       int       `json:"thread"`
 }
 
-func toModelPost(p *Post) *models.Post {
+func toModelPost(p Post) *models.Post {
 	return &models.Post{
 		Author:    p.Author,
 		Created:   p.Created,
 		ForumName: p.ForumName,
-		Id:        p.Id,
+		Id:        p.Pk,
 		IsEdited:  p.IsEdited,
 		Message:   p.Message,
 		Parent:    p.Parent,
@@ -104,7 +104,7 @@ func ModelToPost(p *models.Post) *Post {
 		Author:    p.Author,
 		Created:   p.Created,
 		ForumName: p.ForumName,
-		Id:        p.Id,
+		Pk:        p.Id,
 		IsEdited:  p.IsEdited,
 		Message:   p.Message,
 		Parent:    p.Parent,
@@ -124,127 +124,93 @@ func modelsToPostsArray(p []*models.Post) []Post {
 	return posts
 }
 
-func (h *ThreadHandler) ThreadPostCreateHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
+func (h *ThreadHandler) ThreadPostCreateHandler(c echo.Context) error {
+	body, err := ioutil.ReadAll(c.Request().Body)
+	defer c.Request().Body.Close()
 	if err != nil {
-		http.Error(writer, err.Error(), 500)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
 	var postsInput []Post
 	err = json.Unmarshal(body, &postsInput)
 	if err != nil {
-		http.Error(writer, err.Error(), 500)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	slug := ps["slug"]
+	slug := c.Param("slug")
 	var posts []*models.Post
 	for i := 0; i < len(postsInput); i++ {
-		posts = append(posts, toModelPost(&postsInput[i]))
+		posts = append(posts, toModelPost(postsInput[i]))
 	}
-	posts, err = h.useCase.CreateThreadPost(request.Context(), slug, posts)
+	posts, err = h.useCase.CreateThreadPost(c.Request().Context(), slug, posts)
 
 	if err == forum.ErrThreadNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Thread not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrUserNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "User not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrWrongParentsThread {
-		msg, _ := json.Marshal(map[string]string{"message": "Parent in another thread"})
-		common.WriteData(writer, http.StatusConflict, msg)
-		return
+		msg := map[string]string{"message": "Parent in another thread"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := json.Marshal(modelsToPostsArray(posts))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	common.WriteData(writer, http.StatusCreated, data)
+	return c.JSON(http.StatusCreated, modelsToPostsArray(posts))
 }
 
-func (h *ThreadHandler) GetThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	slug := ps["slug"]
+func (h *ThreadHandler) GetThreadHandler(c echo.Context) error {
+	slug := c.Param("slug")
 
-	thread, err := h.useCase.GetThread(request.Context(), slug)
+	thread, err := h.useCase.GetThread(c.Request().Context(), slug)
 	if err == forum.ErrThreadNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Thread not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := json.Marshal(modelToThread(thread))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, modelToThread(thread))
 }
 
-func (h *ThreadHandler) PostThreadHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	slug := ps["slug"]
+func (h *ThreadHandler) PostThreadHandler(c echo.Context) error {
+	slug := c.Param("slug")
 
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// parse input
 	var input ThreadUpdate
-	err = json.Unmarshal(body, &input)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+	if err := c.Bind(&input); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	thread, err := h.useCase.ChangeThread(request.Context(), slug, input.Title, input.Message)
+	thread, err := h.useCase.ChangeThread(c.Request().Context(), slug, input.Title, input.Message)
 	if err == forum.ErrThreadNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Thread not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := json.Marshal(modelToThread(thread))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, modelToThread(thread))
 }
 
-func (h *ThreadHandler) GetThreadPosts(writer http.ResponseWriter, r *http.Request, ps map[string]string) {
-	slug := ps["slug"]
+func (h *ThreadHandler) GetThreadPosts(c echo.Context) error {
+	slug := c.Param("slug")
 
-	since, err := strconv.Atoi(r.FormValue("since"))
+	since, err := strconv.Atoi(c.QueryParam("since"))
 	if err != nil {
 		since = -1
 	}
-	limit, err := strconv.Atoi(r.FormValue("limit"))
+	limit, err := strconv.Atoi(c.QueryParam("limit"))
 	if err != nil {
 		limit = -1
 	}
-	offset, err := strconv.Atoi(r.FormValue("offset"))
+	offset, err := strconv.Atoi(c.QueryParam("offset"))
 	if err != nil {
 		offset = 0
 	}
-	desc := r.FormValue("desc") == "true"
+	desc := c.QueryParam("desc") == "true"
 	var sort models.PostSortType
-	switch r.FormValue("sort") {
+	switch c.QueryParam("sort") {
 	case "flat", "":
 		sort = models.Flat
 	case "tree":
@@ -253,31 +219,21 @@ func (h *ThreadHandler) GetThreadPosts(writer http.ResponseWriter, r *http.Reque
 		sort = models.ParentTree
 	}
 
-	posts, err := h.useCase.GetThreadPosts(r.Context(), slug, limit, offset, since, desc, sort)
+	posts, err := h.useCase.GetThreadPosts(c.Request().Context(), slug, limit, offset, since, desc, sort)
 	if err == forum.ErrThreadNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Thread not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	result := []byte("[ ")
+	var result []*Post
 	for i := 0; i < len(posts); i++ {
-		if len(result) > 2 {
-			result = append(result, ',')
-		}
-
-		data, err := json.Marshal(ModelToPost(posts[i]))
-		if err != nil {
-			http.Error(writer, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		result = append(result, data...)
+		post := ModelToPost(posts[i])
+		result = append(result, post)
 	}
-	result = append(result, ']')
-	common.WriteData(writer, http.StatusOK, result)
+
+	return c.JSON(http.StatusOK, result)
 }
 
 type Vote struct {
@@ -299,41 +255,24 @@ func toModelVote(v *Vote) models.Vote {
 	}
 }
 
-func (h *ThreadHandler) ThreadVoteHandler(writer http.ResponseWriter, request *http.Request, ps map[string]string) {
-	slug := ps["slug"]
-
-	body, err := ioutil.ReadAll(request.Body)
-	defer request.Body.Close()
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
+func (h *ThreadHandler) ThreadVoteHandler(c echo.Context) error {
+	slug := c.Param("slug")
 
 	var vote Vote
-	err = json.Unmarshal(body, &vote)
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+	if err := c.Bind(&vote); err != nil {
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	thread, err := h.useCase.VoteForThread(request.Context(), slug, toModelVote(&vote))
+	thread, err := h.useCase.VoteForThread(c.Request().Context(), slug, toModelVote(&vote))
 	if err == forum.ErrThreadNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "Thread not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "Thread not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err == forum.ErrUserNotFound {
-		msg, _ := json.Marshal(map[string]string{"message": "User not found"})
-		common.WriteData(writer, http.StatusNotFound, msg)
-		return
+		msg := map[string]string{"message": "User not found"}
+		return c.JSON(http.StatusNotFound, msg)
 	} else if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	data, err := json.Marshal(modelToThread(thread))
-	if err != nil {
-		http.Error(writer, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	common.WriteData(writer, http.StatusOK, data)
+	return c.JSON(http.StatusOK, modelToThread(thread))
 }

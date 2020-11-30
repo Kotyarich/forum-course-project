@@ -10,7 +10,7 @@ import (
 	userHttp "dbProject/user/delivery/http"
 	userPostgres "dbProject/user/repository/postgres"
 	userUceCase "dbProject/user/usecase"
-	"github.com/dimfeld/httptreemux"
+	"github.com/labstack/echo/v4"
 	"log"
 	"net/http"
 	"os"
@@ -18,6 +18,14 @@ import (
 	"time"
 )
 
+// @title BMSTU Web Course 2020 Forums
+// @version 1.0
+// @description BMSTU Web Course 2020 Forums project
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @BasePath api/v1
 type App struct {
 	httpServer *http.Server
 
@@ -43,7 +51,7 @@ func NewApp() *App {
 }
 
 func (a *App) Run(port string) error {
-	router := httptreemux.New()
+	router := echo.New()
 
 	forumHttp.RegisterHTTPEndpoints(router, a.forumUC)
 	userHttp.RegisterHTTPEndpoints(router, a.userUC)
