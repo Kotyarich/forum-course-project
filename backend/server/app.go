@@ -11,6 +11,7 @@ import (
 	userPostgres "dbProject/user/repository/postgres"
 	userUceCase "dbProject/user/usecase"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"log"
 	"net/http"
 	"os"
@@ -47,6 +48,12 @@ func (a *App) Run(port string) error {
 
 	forumHttp.RegisterHTTPEndpoints(router, a.forumUC)
 	userHttp.RegisterHTTPEndpoints(router, a.userUC)
+	router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
+		AllowCredentials: true,
+	}))
 
 	a.httpServer = &http.Server{
 		Addr:           port,

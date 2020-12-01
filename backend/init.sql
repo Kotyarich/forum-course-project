@@ -19,15 +19,6 @@ CREATE TABLE users
   is_admin BOOLEAN DEFAULT FALSE
 );
 
-CREATE TABLE sessions
-(
-  id         serial primary key,
-  user_id    serial    not null references users (id),
-  user_agent text      not null,
-  time       timestamp not null,
-  token      text      not null
-);
-
 CREATE INDEX IF NOT EXISTS users_nickname_and_email ON users (nickname, email);
 
 CREATE TABLE forums

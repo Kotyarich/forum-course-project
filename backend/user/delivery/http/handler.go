@@ -43,12 +43,11 @@ type signInInput struct {
 }
 
 func (h *Handler) SignOutHandler(c echo.Context) error {
-	cookie, err := c.Cookie("Auth")
+	_, err := c.Cookie("Auth")
 	if err != nil {
 		return c.String(http.StatusBadRequest, "")
 	}
 
-	err = h.useCase.SignOut(c.Request().Context(), cookie.Value)
 	c.SetCookie(&http.Cookie{
 		Name:     "Auth",
 		Expires:  time.Now().Add(-24 * time.Hour),
@@ -85,7 +84,7 @@ func (h *Handler) UserAuthHandler(c echo.Context) error {
 	}
 	c.SetCookie(cookie)
 
-	return c.JSON(http.StatusOK,UserToUserOutput(u))
+	return c.JSON(http.StatusOK, UserToUserOutput(u))
 }
 
 func (h *Handler) UserCheckAuthHandler(c echo.Context) error {

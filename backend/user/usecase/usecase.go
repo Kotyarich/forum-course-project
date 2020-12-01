@@ -6,6 +6,7 @@ import (
 	"dbProject/models"
 	userPkg "dbProject/user"
 	"fmt"
+	"github.com/dgrijalva/jwt-go/v4"
 	"time"
 )
 
@@ -29,52 +30,75 @@ func NewUserUseCase(
 	}
 }
 
+type Claims struct {
+	jwt.StandardClaims
+	Nickname string `json:"nickname"`
+}
+
 func (u *UserUseCase) SignUp(ctx context.Context, user *models.User) ([]*models.User, string, error) {
 	user.Password = passwordHash(user.Password, u.hashSalt)
-	conflicts, userId, err := u.userRepo.CreateUser(ctx, user)
+	conflicts, _, err := u.userRepo.CreateUser(ctx, user)
 	if err != nil {
 		return conflicts, "", err
 	}
 
-	token, err := u.userRepo.CreateSession(ctx, userId)
-	if err != nil {
-		return nil, "", err
-	}
+	tk := &Claims{Nickname: user.Nickname}
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), tk)
+	tokenString, _ := token.SignedString([]byte("some_key"))
 
-	return nil, token, nil
+	return nil, tokenString, nil
 }
 
 func (u *UserUseCase) SignIn(ctx context.Context, username, password string) (*models.User, string, error) {
 	password = passwordHash(password, u.hashSalt)
-	user, userId, err := u.userRepo.AuthUser(ctx, username, password)
+	user, _, err := u.userRepo.AuthUser(ctx, username, password)
 	if err != nil {
 		return nil, "", userPkg.ErrUserNotFound
 	}
 
-	token, err := u.userRepo.CreateSession(ctx, userId)
-	if err != nil {
-		return nil, "", err
-	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: jwt.At(time.Now().Add(30 * 24 * time.Hour)),
+			IssuedAt:  jwt.At(time.Now()),
+		},
+		Nickname: user.Nickname,
+	})
 
-	return user, token, nil
+	tokenStr, err := token.SignedString([]byte("some_key"))
+
+	return user, tokenStr, err
 }
 
-func (u *UserUseCase) SignOut(ctx context.Context, token string) error {
-	err := u.userRepo.DeleteSession(ctx, token)
+func ParseToken(token string, signKey []byte) (string, error) {
+	parsedToken, err := jwt.ParseWithClaims(
+		token, &Claims{},
+		func(token *jwt.Token) (i interface{}, e error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+			return signKey, nil
+		})
+
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	if claims, ok := parsedToken.Claims.(*Claims); ok && parsedToken.Valid {
+		return claims.Nickname, nil
+	}
+
+	return "", fmt.Errorf("invalid access token")
 }
 
 func (u *UserUseCase) CheckAuth(ctx context.Context, token string) (*models.User, error) {
-	user, err := u.userRepo.CheckSession(ctx, token)
+	nickname, err := ParseToken(token, []byte("some_key"))
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	user, err := u.userRepo.GetUser(ctx, nickname)
+
+	return user, err
 }
 
 func (u *UserUseCase) GetProfile(ctx context.Context, username string) (*models.User, error) {

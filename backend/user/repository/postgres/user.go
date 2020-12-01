@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"github.com/jackc/pgx"
 	"strconv"
-	"time"
 )
 
 type User struct {
@@ -71,46 +70,6 @@ func (r UserRepository) AuthUser(ctx context.Context, username, password string)
 	}
 
 	return ToModel(&user), userId, nil
-}
-
-func (r UserRepository) CreateSession(ctx context.Context, userId int) (string, error) {
-	userAgent := ctx.Value("UserAgent").(string)
-	authTime := time.Now()
-	token := createToken(userId, userAgent, authTime.String())
-
-	_, err := r.db.Exec("INSERT INTO sessions (user_id, user_agent, time, token) "+
-		"VALUES ($1, $2, $3, $4)",
-		userId, userAgent, authTime, token)
-	if err != nil {
-		return "", err
-	}
-
-	return token, nil
-}
-
-func (r UserRepository) CheckSession(ctx context.Context, token string) (*models.User, error) {
-	row := r.db.QueryRow("SELECT about, email, fullname, nickname "+
-		"FROM users "+
-		"JOIN sessions ON users.id = user_id "+
-		"WHERE token = $1", token)
-
-	var user User
-	err := row.Scan(&user.About, &user.Email, &user.Fullname, &user.Nickname)
-
-	if err != nil {
-		return nil, userPkg.ErrUserNotFound
-	}
-
-	return ToModel(&user), nil
-}
-
-func (r UserRepository) DeleteSession(ctx context.Context, token string) error {
-	_, err := r.db.Exec("DELETE FROM sessions WHERE token = $1", token)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (r UserRepository) GetUser(ctx context.Context, username string) (*models.User, error) {
