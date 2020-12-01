@@ -18,14 +18,6 @@ import (
 	"time"
 )
 
-// @title BMSTU Web Course 2020 Forums
-// @version 1.0
-// @description BMSTU Web Course 2020 Forums project
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
-
-// @BasePath api/v1
 type App struct {
 	httpServer *http.Server
 

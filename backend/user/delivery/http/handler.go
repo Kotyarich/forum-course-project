@@ -99,34 +99,6 @@ func (h *Handler) UserCheckAuthHandler(c echo.Context) error {
 }
 
 func (h *Handler) UserGetHandler(c echo.Context) error {
-
-	// swagger:route GET /pets pets users listPets
-	//
-	// Lists pets filtered by some parameters.
-	//
-	// This will show all available pets by default.
-	// You can get the pets that are out of stock
-	//
-	//     Consumes:
-	//     - application/json
-	//     - application/x-protobuf
-	//
-	//     Produces:
-	//     - application/json
-	//     - application/x-protobuf
-	//
-	//     Schemes: http, https, ws, wss
-	//
-	//     Deprecated: true
-	//
-	//     Security:
-	//       api_key:
-	//       oauth: read, write
-	//
-	//     Responses:
-	//       default: genericError
-	//       200: someResponse
-	//       422: validationError
 	nickname := c.Param("nickname")
 	u, err := h.useCase.GetProfile(c.Request().Context(), nickname)
 	if err != nil {
