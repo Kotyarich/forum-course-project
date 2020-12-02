@@ -29,7 +29,7 @@ type Threads struct {
 func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	handler := NewForumHandler(uc)
 
-	// swagger:operation POST /api/v1/forum/create forums forumCreate
+	// swagger:operation POST /forum/create forums forumCreate
 	// ---
 	// summary: "Создание форума."
 	// description: "Создание нового форума."
@@ -53,10 +53,10 @@ func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	//     description: "Форум уже существует. Возвращает данные ранее созданного форума."
 	//     schema:
 	//       "$ref": "#/definitions/Forum"
-	router.POST("/api/v1/forum/create",
+	router.POST("/forum/create",
 		common.CORSMiddlware(handler.ForumCreateHandler))
 
-	// swagger:operation POST /api/v1/forum/:slug/create forums threadCreate
+	// swagger:operation POST /forum/:slug/create forums threadCreate
 	// ---
 	// description:	"Добавление новой ветки обсуждения на форум."
 	// summary: "Создание ветки"
@@ -87,10 +87,10 @@ func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	//     description: "Ветка обсуждения уже существует. Возвращает данные ранее созданной ветки обсуждения."
 	//     schema:
 	//       $ref: '#/definitions/Thread'
-	router.POST("/api/v1/forum/:slug/create",
+	router.POST("/forum/:slug/create",
 		common.CORSMiddlware(handler.ThreadCreateHandler))
 
-	// swagger:operation GET /api/v1/forums forums forumGetAll
+	// swagger:operation GET /forums forums forumGetAll
 	// ---
 	// description: "Получение информации о всех форумах."
 	// summary: "Получить все форумы"
@@ -99,10 +99,10 @@ func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	//     description: "Информация о форуме."
 	//     schema:
 	//       $ref: '#/definitions/Forum'
-	router.GET("/api/v1/forums",
+	router.GET("/forums",
 		common.CORSMiddlware(handler.ForumsHandler))
 
-	// swagger:operation GET /api/v1/forum/:slug/details forums forumGetOne
+	// swagger:operation GET /forum/:slug/details forums forumGetOne
 	// ---
 	// description: "Получение информации о форуме по его идентификатору."
     // summary: "Получение информации о форуме"
@@ -122,10 +122,10 @@ func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	//     description: "Форум отсутсвует в системе."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.GET("/api/v1/forum/:slug/details",
+	router.GET("/forum/:slug/details",
 		common.CORSMiddlware(handler.ForumDetailsHandler))
 
-	// swagger:operation GET /api/v1/forum/:slug/threads forums forumGetThreads
+	// swagger:operation GET /forum/:slug/threads forums forumGetThreads
 	// ---
 	// description: "Получение списка ветвей обсужления данного форума. Ветви обсуждения выводятся отсортированные по дате создания."
 	// summary: "Список ветвей обсужления форума"
@@ -159,10 +159,10 @@ func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	//     description: "Форум отсутсвует в системе."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.GET("/api/v1/forum/:slug/threads",
+	router.GET("/forum/:slug/threads",
 		common.CORSMiddlware(handler.ForumThreadsHandler))
 
-	// swagger:operation GET /api/v1/forum/:slug/users forums forumGetUsers
+	// swagger:operation GET /forum/:slug/users forums forumGetUsers
 	// ---
 	// description: "Получение списка пользователей, у которых есть пост или ветка обсуждения в данном форуме. Пользователи выводятся отсортированные по nickname в порядке возрастания. Порядок сотрировки должен соответсвовать побайтовому сравнение в нижнем регистре."
 	// summary: "Пользователи данного форума"
@@ -199,14 +199,14 @@ func registerHTTPForumEndpoints(router *echo.Echo, uc forum.UseCaseForum) {
 	//     description: "Форум отсутсвует в системе."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.GET("/api/v1/forum/:slug/users",
+	router.GET("/forum/:slug/users",
 		common.CORSMiddlware(handler.ForumUsersHandler))
 }
 
 func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	handler := NewThreadHandler(uc)
 
-	// swagger:operation POST /api/v1/thread/:slug/create threads postsCreate
+	// swagger:operation POST /thread/:slug/create threads postsCreate
 	// ---
 	// description: "Добавление новых постов в ветку обсуждения на форум. Все посты, созданные в рамках одного вызова данного метода должны иметь одинаковую дату создания (Post.Created)."
 	// summary: "Создание новых постов"
@@ -236,10 +236,10 @@ func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	//     description: "Хотя бы один родительский пост отсутсвует в текущей ветке обсуждения."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.POST("/api/v1/thread/:slug/create",
+	router.POST("/thread/:slug/create",
 		common.CORSMiddlware(handler.ThreadPostCreateHandler))
 
-	// swagger:operation GET /api/v1/thread/:slug/details threads threadGetOne
+	// swagger:operation GET /thread/:slug/details threads threadGetOne
 	// ---
 	// description: "Получение информации о ветке обсуждения по его имени."
 	// summary: "Получение информации о ветке обсуждения"
@@ -258,10 +258,10 @@ func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	//     description: "Ветка обсуждения отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.GET("/api/v1/thread/:slug/details",
+	router.GET("/thread/:slug/details",
 		common.CORSMiddlware(handler.GetThreadHandler))
 
-	// swagger:operation PATCH /api/v1/thread/:slug/details threads threadUpdate
+	// swagger:operation PATCH /thread/:slug/details threads threadUpdate
 	// ---
 	// description: "Обновление ветки обсуждения на форуме."
 	// summary: "Обновление ветки"
@@ -287,10 +287,10 @@ func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	//     description: "Ветка обсуждения отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.PATCH("/api/v1/thread/:slug/details",
+	router.PATCH("/thread/:slug/details",
 		common.CORSMiddlware(handler.PostThreadHandler))
 
-	// swagger:operation GET /api/v1/thread/:slug/posts threads threadGetPosts
+	// swagger:operation GET /thread/:slug/posts threads threadGetPosts
 	// ---
 	// description: "Получение списка сообщений в данной ветке форуме. Сообщения выводятся отсортированные по дате создания."
 	// summary: "Сообщения данной ветви обсуждения"
@@ -336,10 +336,10 @@ func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	//     description: "Ветка обсуждения отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.GET("/api/v1/thread/:slug/posts",
+	router.GET("/thread/:slug/posts",
 		common.CORSMiddlware(handler.GetThreadPosts))
 
-	// swagger:operation POST /api/v1/thread/:slug/vote threads threadVote
+	// swagger:operation POST /thread/:slug/vote threads threadVote
 	// ---
 	// description: "Изменение голоса за ветвь обсуждения. Один пользователь учитывается только один раз и может изменить своё мнение."
 	// summary: "Проголосовать за ветвь обсуждения"
@@ -365,14 +365,14 @@ func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	//     description: "Ветка обсуждения отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.POST("/api/v1/thread/:slug/vote",
+	router.POST("/thread/:slug/vote",
 		common.CORSMiddlware(handler.ThreadVoteHandler))
 }
 
 func registerHTTPPostEndpoints(router *echo.Echo, uc forum.UseCasePost) {
 	handler := NewPostHandler(uc)
 
-	// swagger:operation GET /api/v1/post/:id/details posts postGetOne
+	// swagger:operation GET /post/:id/details posts postGetOne
 	// ---
 	// description: "Получение информации о ветке обсуждения по его имени."
 	// summary: "Получение информации о ветке обсуждения"
@@ -402,10 +402,10 @@ func registerHTTPPostEndpoints(router *echo.Echo, uc forum.UseCasePost) {
 	//     description: "Ветка обсуждения отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.GET("/api/v1/post/:id/details",
+	router.GET("/post/:id/details",
 		common.CORSMiddlware(handler.GetPostHandler))
 
-	// swagger:operation PUT /api/v1/post/:id/details posts postUpdate
+	// swagger:operation PUT /post/:id/details posts postUpdate
 	// ---
 	// description: "Изменение сообщения на форуме. Если сообщение поменяло текст, то оно должно получить отметку `isEdited`."
 	// summary: "Изменение сообщения"
@@ -431,14 +431,14 @@ func registerHTTPPostEndpoints(router *echo.Echo, uc forum.UseCasePost) {
 	//     description: "Сообщение отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.PUT("/api/v1/post/:id/details",
+	router.PUT("/post/:id/details",
 		common.CORSMiddlware(handler.ChangePostHandler))
 }
 
 func registerHTTPServiceEndpoints(router *echo.Echo, uc forum.UseCaseService) {
 	handler := NewServiceHandler(uc)
 
-	// swagger:operation GET /api/v1/service/clear service clear
+	// swagger:operation GET /service/clear service clear
 	// ---
 	// description: "Безвозвратное удаление всей пользовательской информации из базы данных."
 	// consumes:
@@ -451,7 +451,7 @@ func registerHTTPServiceEndpoints(router *echo.Echo, uc forum.UseCaseService) {
 	router.POST("/api/service/clear",
 		common.CORSMiddlware(handler.ClearHandler))
 
-	// swagger:operation GET /api/v1/service/status service status
+	// swagger:operation GET /service/status service status
 	// ---
 	// description: "Получение инфомарции о базе данных."
 	// summary: "Получение инфомарции о базе данных"

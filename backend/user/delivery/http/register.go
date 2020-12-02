@@ -14,7 +14,7 @@ type Users struct {
 func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	handler := NewHandler(uc)
 
-	// swagger:operation GET /api/v1/user/signout user signOut
+	// swagger:operation GET /user/signout user signOut
 	// ---
 	// description: "Разлогирование пользователя"
 	// summary: "Разлогирование пользователя"
@@ -23,11 +23,11 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//     description: "Cookie Auth проставляется просроченной"
 	//   "400":
 	//     description: "Пользователь не был авторизован"
-	router.GET("/api/v1/user/signout",
+	router.GET("/user/signout",
 		common.CORSMiddlware(
 			AuthMiddleware(handler.SignOutHandler, uc)))
 
-	// swagger:operation GET /api/v1/user/check user userCheck
+	// swagger:operation GET /user/check user userCheck
 	// ---
 	// description: "Проверка авторизации пользователя, возвращает информацию о пользователе, если он авторизован"
 	// summary: "Проверка авторизации пользователя"
@@ -38,11 +38,11 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//       "$ref": '#/definitions/User'
 	//   "403":
 	//     description: "Пользователь не был авторизован"
-	router.GET("/api/v1/user/check",
+	router.GET("/user/check",
 		common.CORSMiddlware(
 			AuthMiddleware(handler.UserCheckAuthHandler, uc)))
 
-	// swagger:operation POST /api/v1/user/:nickname/create user userCreate
+	// swagger:operation POST /user/:nickname/create user userCreate
 	// ---
 	// description: "Создание нового пользователя в базе данных."
 	// summary: "Создание нового пользователя"
@@ -67,10 +67,10 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//     description: "Пользователь уже присутсвует в базе данных. Возвращает данные ранее созданных пользователей с тем же nickname-ом иои email-ом."
 	//     schema:
 	//       $ref: '#/definitions/Users'
-	router.POST("/api/v1/user/:nickname/create",
+	router.POST("/user/:nickname/create",
 		common.CORSMiddlware(handler.UserCreateHandler))
 
-	// swagger:operation GET /api/v1/user/:nickname/profile user userGetOne
+	// swagger:operation GET /user/:nickname/profile user userGetOne
 	// ---
 	// description: "Получение информации о пользователе форума по его имени."
 	// summary: Получение информации о пользователе
@@ -89,10 +89,10 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//     description: "Пользователь отсутсвует в системе."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.GET("/api/v1/user/:nickname/profile",
+	router.GET("/user/:nickname/profile",
 		common.CORSMiddlware(handler.UserGetHandler))
 
-	// swagger:operation PATCH /api/v1/user/:nickname/profile user userUpdate
+	// swagger:operation PATCH /user/:nickname/profile user userUpdate
 	// ---
 	// description: "Изменение информации в профиле пользователя."
 	// summary: "Изменение данных о пользователе"
@@ -121,10 +121,10 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//     description: "Новые данные профиля пользователя конфликтуют с имеющимися пользователями."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.PATCH("/api/v1/user/:nickname/profile",
+	router.PATCH("/user/:nickname/profile",
 		common.CORSMiddlware(handler.UserPostHandler))
 
-	// swagger:operation POST /api/v1/user/auth user userAuth
+	// swagger:operation POST /user/auth user userAuth
 	// ---
 	// description: "Авторизая пользователя, возвращает cookie c токеном."
 	// summary: "Авторизация пользователя"
@@ -140,5 +140,5 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//     description: "Пользователь успешно авторизован. Устанавливается HttpOnly cookie Auth с токеном"
 	//   "403":
 	//     description: "Неверные данные пользователя"
-	router.POST("/api/v1/user/auth", common.CORSMiddlware(handler.UserAuthHandler))
+	router.POST("/user/auth", common.CORSMiddlware(handler.UserAuthHandler))
 }

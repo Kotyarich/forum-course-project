@@ -315,7 +315,7 @@
           }
         }
       },
-      "post": {
+      "put": {
         "description": "Изменение сообщения на форуме. Если сообщение поменяло текст, то оно должно получить отметку `isEdited`.",
         "tags": [
           "posts"
@@ -475,7 +475,7 @@
           }
         }
       },
-      "post": {
+      "patch": {
         "description": "Обновление ветки обсуждения на форуме.",
         "tags": [
           "threads"
@@ -703,7 +703,7 @@
           }
         }
       },
-      "post": {
+      "patch": {
         "description": "Изменение информации в профиле пользователя.",
         "tags": [
           "user"
@@ -1262,17 +1262,5 @@
         }
       }
     }
-  },
-  "securityDefinitions": {
-    "api_key": {
-      "type": "apiKey",
-      "name": "KEY",
-      "in": "header"
-    }
-  },
-  "security": [
-    {
-      "api_key": []
-    }
-  ]
+  }
 }
