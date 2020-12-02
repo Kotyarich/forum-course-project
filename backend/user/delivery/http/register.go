@@ -92,7 +92,7 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	router.GET("/api/v1/user/:nickname/profile",
 		common.CORSMiddlware(handler.UserGetHandler))
 
-	// swagger:operation POST /api/v1/user/:nickname/profile user userUpdate
+	// swagger:operation PATCH /api/v1/user/:nickname/profile user userUpdate
 	// ---
 	// description: "Изменение информации в профиле пользователя."
 	// summary: "Изменение данных о пользователе"
@@ -121,7 +121,7 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//     description: "Новые данные профиля пользователя конфликтуют с имеющимися пользователями."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.POST("/api/v1/user/:nickname/profile",
+	router.PATCH("/api/v1/user/:nickname/profile",
 		common.CORSMiddlware(handler.UserPostHandler))
 
 	// swagger:operation POST /api/v1/user/auth user userAuth

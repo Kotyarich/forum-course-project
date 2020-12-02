@@ -261,7 +261,7 @@ func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	router.GET("/api/v1/thread/:slug/details",
 		common.CORSMiddlware(handler.GetThreadHandler))
 
-	// swagger:operation POST /api/v1/thread/:slug/details threads threadUpdate
+	// swagger:operation PATCH /api/v1/thread/:slug/details threads threadUpdate
 	// ---
 	// description: "Обновление ветки обсуждения на форуме."
 	// summary: "Обновление ветки"
@@ -287,7 +287,7 @@ func registerHTTPThreadEndpoints(router *echo.Echo, uc forum.UseCaseThread) {
 	//     description: "Ветка обсуждения отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.POST("/api/v1/thread/:slug/details",
+	router.PATCH("/api/v1/thread/:slug/details",
 		common.CORSMiddlware(handler.PostThreadHandler))
 
 	// swagger:operation GET /api/v1/thread/:slug/posts threads threadGetPosts
@@ -405,7 +405,7 @@ func registerHTTPPostEndpoints(router *echo.Echo, uc forum.UseCasePost) {
 	router.GET("/api/v1/post/:id/details",
 		common.CORSMiddlware(handler.GetPostHandler))
 
-	// swagger:operation POST /api/v1/post/:id/details posts postUpdate
+	// swagger:operation PUT /api/v1/post/:id/details posts postUpdate
 	// ---
 	// description: "Изменение сообщения на форуме. Если сообщение поменяло текст, то оно должно получить отметку `isEdited`."
 	// summary: "Изменение сообщения"
@@ -431,7 +431,7 @@ func registerHTTPPostEndpoints(router *echo.Echo, uc forum.UseCasePost) {
 	//     description: "Сообщение отсутсвует в форуме."
 	//     schema:
 	//       $ref: '#/responses/Error'
-	router.POST("/api/v1/post/:id/details",
+	router.PUT("/api/v1/post/:id/details",
 		common.CORSMiddlware(handler.ChangePostHandler))
 }
 
