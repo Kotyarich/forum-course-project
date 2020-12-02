@@ -21,15 +21,59 @@ func NewThreadHandler(useCase forum.UseCaseThread) *ThreadHandler {
 	}
 }
 
+// Ветка обсуждений на форуме
+// swagger:model
 type Thread struct {
+	// Пользователь, создавший ветку
+	//
+	// format: identity
+	// example: j.sparrow
 	Author     string    `json:"author"`
+
+	// Человекопонятный URL
+	//
+	// format: identity
+	// read only: true
+	// example: jones-cache
 	Slug       *string   `json:"slug"`
+
+	// Кол-во голосов
+	//
+	// read only: true
 	Votes      int       `json:"votes"`
+
+	// Заголовок ветки
+	//
+	// example: Davy Jones cache
 	Title      string    `json:"title"`
+
+	// Дата создания ветки
+	//
+	// example: 2017-01-01T00:00:00.000Z
 	Created    time.Time `json:"created"`
+
+	// Форум ветки
+	//
+	// format: identity
+	// read only: true
+	// example: pirate-stories
 	ForumName  string    `json:"forum"`
+
+	// Идентификатор ветки обсуждения
+	//
+	// read only: true
+	// example: 42
 	Id         int       `json:"id"`
+
+	// Описание ветки обсуждения
+	//
+	// example: An urgent need to reveal the hiding place of Davy Jones. Who is willing to help in this matter?
 	Message    string    `json:"message"`
+
+	// Количество сообщений в ветке
+	//
+	// read only: true
+	// example: 100
 	PostsCount int       `json:"posts"`
 }
 
@@ -70,19 +114,59 @@ type ThreadResult struct {
 	Message   string    `json:"message"`
 }
 
+// Сообщение для обновления ветки обсуждения на форуме. Пустые параметры остаются без изменений.
+// swagger:model ThreadUpdate
 type ThreadUpdate struct {
+	// Описание ветки обсуждения
+	//
+	// example: An urgent need to reveal the hiding place of Davy Jones. Who is willing to help in this matter?
 	Message string `json:"message"`
+
+	// Заголовок ветки обсуждения
+	//
+	// example: Davy Jones cache
 	Title   string `json:"title"`
 }
 
+// Информация о сообщении
+// swagger:model
 type Post struct {
+	// Автор сообщения
+	//
+	// format: identity
+	// example: j.sparrow
 	Author    string    `json:"author"`
+
+	// Дата создания
+	//
+	// read only: true
 	Created   time.Time `json:"created"`
+
+	// Идентификатор форума
+	// read only: true
+	// format: identity
 	ForumName string    `json:"forum"`
+
+	// Идентификатор сообщения
+	//
+	// read only: true
 	Pk        int       `json:"id"`
+
+	// Истина, если сообщение было изменено
+	// read only: true
 	IsEdited  bool      `json:"isEdited"`
+
+	// Текст сообщения
+	//
+	// example: We should be afraid of the Kraken
 	Message   string    `json:"message"`
+
+	// Идентификатор родительского сообщения
 	Parent    int       `json:"parent"`
+
+	// Идентификатор ветви обсуждения данного сообщения
+	//
+	// read only: true
 	Tid       int       `json:"thread"`
 }
 
@@ -236,8 +320,20 @@ func (h *ThreadHandler) GetThreadPosts(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
+
+// Информация о голосовании пользователя
+// swagger:model
 type Vote struct {
+	// Отданный голос
+	//
+	// enum:
+	//   - -1
+	//   - 1
 	Voice    int    `json:"voice"`
+
+	// Имя пользователя
+	//
+	// format: identity
 	Nickname string `json:"nickname"`
 }
 

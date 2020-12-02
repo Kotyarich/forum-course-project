@@ -19,11 +19,35 @@ func NewHandler(useCase user.UseCase) *Handler {
 	}
 }
 
+// Информация о пользователе
+// swagger:model User
 type userInput struct {
+	// Описание пользователя
+	//
+	// example: This is the day you will always remember as the day that you almost caught Captain Jack Sparrow!
 	About    string `json:"about"`
+
+	// Почтовый адрес пользователя
+	//
+	// format: email
+	// example: captaina@blackpearl.sea
 	Email    string `json:"email"`
+
+	// Полное имя пользователя
+	//
+	// example: Captain Jack Sparrow
 	Fullname string `json:"fullname"`
+
+	// Имя пользователя (уникальное поле)
+	//
+	// format: identity
+	// read only: true
+	// example: j.sparrow
 	Nickname string `json:"nickname"`
+
+	// Пароль пользователя
+	//
+	// example: 123456
 	Password string `json:"password,omitempty"`
 }
 
@@ -37,8 +61,13 @@ func userInputToModel(user userInput) *models.User {
 	}
 }
 
+// Данные пользователя для авторизации
+// swagger:model UserLogIn
 type signInInput struct {
+	// Имя пользователя
 	Nickname string `json:"nickname"`
+
+	// Пароль пользователя
 	Password string `json:"password"`
 }
 

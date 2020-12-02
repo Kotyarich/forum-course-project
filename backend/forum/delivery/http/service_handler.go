@@ -28,10 +28,26 @@ func (h *ServiceHandler) ClearHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "")
 }
 
+//swagger:model
 type Status struct {
+	// Кол-во разделов в базе данных
+	//
+	// example: 100
 	Forums  int `json:"forum"`
+
+	// Кол-во сообщений в базе данных
+	//
+	// example: 1000000
 	Posts   int `json:"post"`
+
+	// Кол-во веток обсуждений в базе данных
+	//
+	// example: 1000
 	Threads int `json:"thread"`
+
+	// Кол-во пользователей в базе данных
+	//
+	// example: 1000
 	Users   int `json:"user"`
 }
 

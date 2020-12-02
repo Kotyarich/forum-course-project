@@ -21,18 +21,59 @@ func NewForumHandler(useCase forum.UseCaseForum) *ForumHandler {
 	}
 }
 
+
+// Информация о форуме
+// swagger:model Forum
 type ForumOutput struct {
+	// Общее количество сообщений в форуме
+	//
+	// read only: true
+	// example: 200000
 	Posts   int    `json:"posts"`
+
+	// Человекопонятный URL, уникальное поле
+	//
+	// required: true
+	// unique: true
+	// example: pirate-stories
 	Slug    string `json:"slug"`
+
+	// Общее количество ветвей обсуждения в форуме
+	//
+	// read only: true
+	// example: 200
 	Threads int    `json:"threads"`
+
+	// Название форума
+	//
+	// required: true
+	// example: Pirate stories
 	Title   string `json:"title"`
+
+	// Nickname пользователя, создавшего форум
+	// example: j.sparrow
 	User    string `json:"user"`
 }
 
+// Информация о новом форуме
+// swagger:model
 type ForumInput struct {
+	// Человекопонятный URL, уникальное поле
+	//
+	// required: true
+	// unique: true
+	// example: pirate-stories
 	Slug  string `json:"slug"`
-	Title string `json:"title"`
-	User  string `json:"user"`
+
+	// Название форума
+	//
+	// required: true
+	// example: Pirate stories
+	Title   string `json:"title"`
+
+	// Nickname пользователя, создавшего форум
+	// example: j.sparrow
+	User    string `json:"user"`
 }
 
 func forumInputToModel(f ForumInput) *models.Forum {

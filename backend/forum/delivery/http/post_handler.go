@@ -20,8 +20,12 @@ func NewPostHandler(useCase forum.UseCasePost) *PostHandler {
 	}
 }
 
-
+// Сообщение для обновления существующего
+// swagger:model PostUpdate
 type postInput struct {
+	// Собственно сообщение
+	//
+	// example: We should be afraid of the Kraken
 	Message string `json:"message"`
 }
 
@@ -47,10 +51,19 @@ func (h *PostHandler) ChangePostHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, ModelToPost(post))
 }
 
+// Полная информация о сообщени, включая связанные объекты
+// swagger:model PostFull
 type DetailedInfo struct {
+	// "$ref": "#/definition/Post"
 	PostInfo   Post                 `json:"post"`
+
+	// "$ref": "#/definition/User"
 	AuthorInfo *userHttp.UserOutput `json:"author,omitempty"`
+
+	// "$ref": "#/definition/Thread"
 	ThreadInfo *Thread              `json:"thread,omitempty"`
+
+	// "$ref": "#/definition/Forum"
 	ForumInfo  *ForumOutput         `json:"forum,omitempty"`
 }
 
