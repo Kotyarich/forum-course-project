@@ -55,6 +55,10 @@ func (a *App) Run(port string) error {
 		AllowCredentials: true,
 	}))
 
+	router.Use(middleware.Logger())
+
+	router.Static("/", "swaggerui")
+
 	a.httpServer = &http.Server{
 		Addr:           port,
 		Handler:        router,
