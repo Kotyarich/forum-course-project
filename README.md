@@ -63,3 +63,7 @@ Percentage of the requests served within a certain time (ms)
 ### ER диаграмма базы данных
 
 ![alt ER.png](schemes/ER.png "ER")
+
+### Use-case диаграмма базы данных
+
+![alt use-case.png](schemes/use-case.png "use-case")
