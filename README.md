@@ -64,6 +64,6 @@ Percentage of the requests served within a certain time (ms)
 
 ![alt ER.png](schemes/ER.png "ER")
 
-### Use-case диаграмма базы данных
+### Use-case диаграмма проекта
 
 ![alt use-case.png](schemes/use-case.png "use-case")
