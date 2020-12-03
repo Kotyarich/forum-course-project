@@ -59,3 +59,7 @@ Percentage of the requests served within a certain time (ms)
   99%     58
  100%    235 (longest request)
 ```
+
+### ER диаграмма базы данных
+
+![alt ER.png](schemes/ER.png "ER")
