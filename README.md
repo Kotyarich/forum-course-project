@@ -2,6 +2,14 @@
 
 Форум. Предполагается возможность создания форумов админами, тредов и постов всеми пользователями. Просмотр чужих профилей, изменение своего. JWT авторизация.
 
+### ER диаграмма базы данных
+
+![alt ER.png](schemes/ER.png "ER")
+
+### Use-case диаграмма проекта
+
+![alt use-case.png](schemes/use-case.png "use-case")
+
 ### ab тестирование
 ```
 ab -n 100000 -c 100 http://127.0.0.1:8080/api/v1/forums 
@@ -59,3 +67,4 @@ Percentage of the requests served within a certain time (ms)
   99%     58
  100%    235 (longest request)
 ```
+
