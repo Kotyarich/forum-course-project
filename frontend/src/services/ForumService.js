@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:5000/api/forum';
+const baseUrl = 'http://localhost:5000/forum';
 
 class ForumService {
   getAll = async () => {

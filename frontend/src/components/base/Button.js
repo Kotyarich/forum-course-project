@@ -7,7 +7,7 @@ const Button = (props) => {
       className={props.name + '-button button'}
       disabled={props.disabled}
       onClick={props.action}>
-      {props.title}
+      {props.title? props.title : props.children}
     </button>)
 };
 

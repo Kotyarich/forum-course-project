@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:5000/api/';
+const baseUrl = 'http://localhost:5000/';
 
 class ThreadService {
   getAll = async (forumSlug, since = '', limit = 10, offset = 0, desc = true) => {

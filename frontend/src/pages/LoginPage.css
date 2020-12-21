@@ -1,4 +1,8 @@
 .login-page {
+    font-family: Titillium Web, serif;
+    font-style: normal;
+    font-weight: normal;
+    margin-top: 20vh;
     display: flex;
     flex-direction: row;
     justify-content: center;

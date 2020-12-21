@@ -1,8 +1,5 @@
 .post {
     margin-top: 5pt;
-    border: 1px solid #cfcfcf;
-    border-radius: 10px;
-    background-color: rgba(215, 215, 215, 0.32);
     padding: 10pt;
 }
 
@@ -11,13 +8,18 @@
 }
 
 .post__header__author {
-    margin-right: auto;
     font-size: medium;
     text-decoration: none;
     color: #2f4a59;
 }
 
+.post__reply-to {
+    color: gray;
+    margin-left: 6pt;
+}
+
 .post__header__id {
+    margin-left: auto;
     color: gray;
 }
 
@@ -28,14 +30,25 @@
 }
 
 .post__message {
+    margin-left: 25pt;
+    margin-right: 20pt;
     margin-top: 10pt;
     font-size: medium;
+    color: var(--text-dark-color);
 }
 
 .post__footer {
     display: flex;
 }
 
-.post__footer .answer__button {
-    margin: auto;
+.post__edited {
+    margin-right: auto;
+}
+
+.post__footer .post__answer-button {
+    margin-left: 10pt;
+}
+
+.post__footer .post__change-button {
+    margin-left: auto;
 }

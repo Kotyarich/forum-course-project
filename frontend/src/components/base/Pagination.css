@@ -11,8 +11,8 @@ ul.pagination {
 
 .pagination li {
     display: inline-block;
-    color: #497289;
-    border: 1px solid #cccccc;
+    color: var(--text-dark-color);
+    border: 1px solid var(--text-dark-color);
     border-right: none;
     font-size: medium;
     cursor: pointer;
@@ -27,12 +27,12 @@ ul.pagination {
 }
 
 .pagination .next {
-    border-right: 1px solid #cccccc;
+    border-right: 1px solid var(--text-dark-color);
     border-radius: 0 4px 4px 0;
 }
 
 .pagination .active {
-    background-color: #497289 !important;
+    background-color: var(--secondary-background) !important;
     color: #fff !important;
     cursor: default;
 }

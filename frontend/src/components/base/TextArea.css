@@ -16,9 +16,8 @@
 
 .form-textarea:focus {
     padding: 5px 10px 7px;
-    background-color: lightcyan;
     transition: 0.4s;
-    border: 2px solid #3399FF;
+    border: 2px solid var(--button-color);
 }
 
 .form-textarea.form-textarea-error {

@@ -14,12 +14,15 @@ const ThreadsList = (props) => {
         <div className={'threads-list__header__threads threads__header'}>
           {'Thread'}
         </div>
-        <Link to={'/create-thread'} className={'thread-creation'}>
+        <Link to={'/create-thread'} className={'thread-creation button'}>
           {'Create new thread'}
         </Link>
       </div>
       {props.threads.map((thread) =>
-        <ThreadItem key={thread.id} thread={thread} onClick={props.onClick}/>
+        <ThreadItem user={props.user}
+                    key={thread.id}
+                    thread={thread}
+                    onClick={props.onClick}/>
       )}
       {props.threads.length === 0 && <div className={'threads-list_empty'}>
         {'This forum is empty'}

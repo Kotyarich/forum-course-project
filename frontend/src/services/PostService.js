@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:5000/api/';
+const baseUrl = 'http://localhost:5000/';
 
 class PostService {
   getByThreadSlug = async (slug, limit = 10, sort = "flat", desc = false,
@@ -15,6 +15,28 @@ class PostService {
 
     const request = new Request(urlWithParams, options);
     const response = await fetch(request);
+    return response.json();
+  };
+
+  create = async (slug, author, message, parent) => {
+    const url = baseUrl + 'thread/' + slug + '/create';
+    const headers = new Headers();
+    const options = {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(
+        [{
+          author: author,
+          parent: +parent,
+          message: message
+        }]
+      ),
+    };
+    console.log(options);
+
+    const request = new Request(url, options);
+    const response = await fetch(request);
+    console.log(response);
     return response.json();
   };
 }

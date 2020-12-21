@@ -1,7 +1,6 @@
 import React from "react";
 import {observer} from "mobx-react";
 import ForumsList from "../components/forum/ForumsList";
-// import './MainPage.css'
 
 @observer
 class MainPage extends React.Component {

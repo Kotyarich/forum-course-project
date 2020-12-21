@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:5000/api/user/';
+const baseUrl = 'http://localhost:5000/user/';
 
 class UserService {
   signIn = async (user) => {

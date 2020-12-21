@@ -8,6 +8,7 @@ const ThreadItem = (props) => {
   return (
     <div className={'thread-item'}>
       <Rating id={id}
+              user={props.user}
               votes={votes}
               onClick={props.onClick}/>
       <div className={'thread-item__header'}>

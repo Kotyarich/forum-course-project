@@ -35,10 +35,12 @@ class ForumPage extends React.Component {
     const pageCount = forum.threads / this.THREADS_LIMIT;
 
     const threads = this.props.threadStore.threads;
-
+    console.log(this.props.userStore.currentUser);
     return (
       <div className={'threads-page'}>
-        <ThreadsList threads={threads} onClick={this.onRatingChange}/>
+        <ThreadsList threads={threads}
+                     user={this.props.userStore.currentUser}
+                     onClick={this.onRatingChange}/>
         <ReactPaginate pageCount={pageCount}
                        marginPagesDisplayed={1}
                        pageRangeDisplayed={4}

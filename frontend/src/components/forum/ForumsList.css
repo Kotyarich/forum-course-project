@@ -1,24 +1,25 @@
 .forums-list__header {
     display: flex;
     flex-direction: row;
-    padding: 10pt;
     border-radius: 2px;
-    background: rgba(207, 207, 207, 0.78) linear-gradient(0deg, rgba(217, 217, 217, 0.78) 15%,
-    rgba(251, 251, 251, 0.6));
+    background: var(--secondary-background);
+    padding: 10pt var(--side-padding);
 }
 
 .forums__header {
-    width: 320pt;
-    color: #497289;
-    font-weight: bolder;
-    font-size: medium;
+    color: var(--text-light-color);
+    font-family: Titillium Web, serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 24px;
+    line-height: 20px;
 }
 
 .forums__first-col {
-    margin-right: 30pt;
+    margin-right: auto;
 }
 
 .forums__col {
-    text-align: center;
-    width: 70pt;
+    text-align: right;
+    margin-right: 24pt;
 }

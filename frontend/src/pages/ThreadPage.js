@@ -4,7 +4,8 @@ import "../components/base/Pagination.css"
 import ReactPaginate from 'react-paginate'
 import PostsList from "../components/post/PostsList";
 import Thread from "../components/thread/Thread";
-import Button from "../components/base/Button";
+import PostForm from "../components/post/PostForm";
+import "./ThreadPage.css"
 
 @observer
 class ThreadPage extends React.Component {
@@ -14,6 +15,7 @@ class ThreadPage extends React.Component {
   }
 
   componentDidMount() {
+    this.currentPage = 0;
     const slug = this.props.slug;
     const postStore = this.props.postStore;
     postStore.getThread(slug);
@@ -21,10 +23,33 @@ class ThreadPage extends React.Component {
   };
 
   onPageChange = (pageNumber) => {
+    this.currentPage = pageNumber.selected;
     const slug = this.props.slug;
-    const offset = pageNumber.selected * this.POSTS_LIMIT;
+    const offset = this.currentPage * this.POSTS_LIMIT;
     const postStore = this.props.postStore;
     postStore.getPosts(slug, this.POSTS_LIMIT, "flat", false, offset);
+  };
+
+  onAnswer = (id) => {
+    this.props.answerStore.form.fields.parent.value = id;
+    this.endFormRef.scrollIntoView({behavior: 'smooth'})
+  };
+
+  onSend = () => {
+    const answerStore = this.props.answerStore;
+    const slug = this.props.slug;
+    const author = this.props.userStore.currentUser.nickname;
+    answerStore.send(slug, author).then(() => {
+      answerStore.form.fields.message.value = '';
+      answerStore.form.fields.parent.value = '0';
+      this.props.postStore.getThread(slug).then(() => {
+        const thread = this.props.postStore.thread;
+        this.currentPage = thread.posts / this.POSTS_LIMIT | 0;
+        const offset = this.currentPage * this.POSTS_LIMIT;
+        const postStore = this.props.postStore;
+        postStore.getPosts(slug, this.POSTS_LIMIT, "flat", false, offset);
+      });
+    });
   };
 
   render() {
@@ -32,28 +57,32 @@ class ThreadPage extends React.Component {
     const pageCount = thread.posts / this.POSTS_LIMIT;
 
     const posts = this.props.postStore.posts;
-    console.log(thread);
 
     return (
-      <div className={'threads-page'}>
-        <Thread thread={thread}/>
-        <PostsList posts={posts}/>
-        <ReactPaginate pageCount={pageCount}
-                       marginPagesDisplayed={1}
-                       pageRangeDisplayed={4}
-                       onPageChange={this.onPageChange}
-                       containerClassName={'pagination'}
-                       subContainerClassName={'pages pagination'}
-                       breakClassName={'break-me'}
-                       disabledClassName={'disabled'}
-                       activeClassName={'active'}/>
-        <div className={'thread__footer'}>
-          <Button title={'Answer'}
-                  name={'answer'}
-                  action={() => {
-                  }}/>
+      <>
+        <div className={'thread-page__header'}/>
+        <div className={'thread-page'}>
+          <Thread thread={thread}/>
+          <PostsList posts={posts} onAnswer={this.onAnswer}/>
+          <ReactPaginate pageCount={pageCount}
+                         marginPagesDisplayed={1}
+                         pageRangeDisplayed={4}
+                         forcePage={this.currentPage}
+                         onPageChange={this.onPageChange}
+                         containerClassName={'pagination'}
+                         subContainerClassName={'pages pagination'}
+                         breakClassName={'break-me'}
+                         disabledClassName={'disabled'}
+                         activeClassName={'active'}/>
+          <hr/>
+          <PostForm form={this.props.answerStore.form}
+                    onSend={this.onSend}
+                    onChange={this.props.answerStore.onFieldChange}/>
+          <div ref={el => {
+            this.endFormRef = el
+          }}/>
         </div>
-      </div>
+      </>
     );
   }
 }

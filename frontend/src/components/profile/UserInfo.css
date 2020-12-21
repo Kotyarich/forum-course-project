@@ -26,7 +26,6 @@
 
 .profile-change-button {
     margin-left: 10pt;
-    background-color: #69a5c6;
 }
 
 .profile .submit-button {
@@ -35,7 +34,6 @@
 
 .profile-change-button:hover {
     transition: 0.4s;
-    background-color: #497289;
 }
 
 .profile-cancel-button {

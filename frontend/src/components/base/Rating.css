@@ -1,6 +1,7 @@
 .rating {
     border-radius: 5px;
-    border: 1px solid #69a5c6;
+    color: var(--text-dark-color);
+    border: 1px solid var(--text-dark-color);
     padding: 4pt;
     margin-right: 10pt;
     background-color: rgba(135, 213, 255, 0.06);

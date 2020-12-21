@@ -1,9 +1,11 @@
 .forum {
+    margin-left: var(--side-padding);
+    margin-right: var(--side-padding);
     display: flex;
     flex-direction: row;
     border-bottom: 1px solid #cccccc;
     border-top: 1px solid #cccccc;
-    padding: 10pt;
+    padding: 10pt 0;
 }
 
 .forum__title {
@@ -23,10 +25,14 @@
 
 .forum__header {
     width: 320pt;
-    margin-right: 30pt;
+    margin-right: auto;
 }
 
 .forum__numeric-info {
     font-size: medium;
+    text-align: center;
+    width: 40pt;
+    padding-right: 10pt;
     padding-top: 1pt;
+    color: var(--text-dark-color);
 }

@@ -1,0 +1,22 @@
+.post-form {
+    display: flex;
+    flex-direction: column;
+    justify-items: start;
+    border: 1px solid lightgrey;
+    border-radius: 6px;
+    padding: 10pt;
+}
+
+.post-form .form-label {
+    width: auto;
+}
+
+.post-form .form-input {
+    width: 100pt;
+    margin-bottom: 5pt;
+}
+
+.answer-button {
+    margin: 5pt 5pt 0 auto;
+    width: min-content;
+}

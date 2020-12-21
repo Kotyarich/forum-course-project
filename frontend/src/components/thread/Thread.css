@@ -1,34 +1,27 @@
 .thread {
+    padding: 10pt 5pt 5pt 10pt;
+}
+
+.thread__header {
     display: flex;
-    background-color: #a7a7a7;
-    border: 1px solid #497289;
-    border-radius: 10px;
+    align-items: flex-end;
 }
 
 .thread__author {
-    padding: 10pt 10pt 10pt 10pt;
+    margin-left: 10pt;
     font-size: medium;
     color: #2f4a59;
-}
-
-.thread__author__link {
     text-decoration: none;
 }
 
-.thread__author__link:visited {
+.thread__author:visited {
     color: #2f4a59;
-}
-
-.thread__main {
-    background-color: rgb(196, 218, 247);
-    border-radius: 10px;
-    padding: 5pt 5pt 5pt 10pt;
 }
 
 .thread__title {
     font-size: large;
     font-weight: bold;
-    color: #2f4a59;
+    color: var(--text-dark-color);
 }
 
 .thread__created {
@@ -39,4 +32,7 @@
 .thread__message {
     padding-top: 5pt;
     font-size: medium;
+    margin-right: 20pt;
+    margin-left: 20pt;
+    color: var(--text-dark-color);
 }

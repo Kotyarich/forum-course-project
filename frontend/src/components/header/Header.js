@@ -8,13 +8,13 @@ const LoggedOutView = props => {
     return (
       <div className="nav navbar-nav pull-xs-right">
         <div className="nav-item">
-          <Link to="/login" className="nav-link">
+          <Link to="/login" className="nav-link button">
             Sign in
           </Link>
         </div>
 
         <div className="nav-item">
-          <Link to="/register" className="nav-link">
+          <Link to="/register" className="nav-link button">
             Sign up
           </Link>
         </div>
@@ -36,13 +36,13 @@ const LoggedInView = props => {
         <div className="nav-item">
           <Link
             to={`/profile/${props.userStore.currentUser.nickname}`}
-            className="nav-item"
+            className="nav-item navbar__username"
           >
             {props.userStore.currentUser.nickname}
           </Link>
           <button className={'nav-item button button_sign-out'}
                   onClick={onClick}>
-            sign out
+            Sign Out
           </button>
         </div>
 
@@ -59,7 +59,7 @@ class Header extends Component {
     return (
       <nav className="navbar navbar-light">
         <Link to="/" className="navbar-brand">
-          Картинка
+          Codemate finder
         </Link>
 
         <LoggedOutView currentUser={this.props.userStore.currentUser}/>

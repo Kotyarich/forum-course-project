@@ -1,15 +1,26 @@
 .navbar {
-    background: rgba(113, 176, 212, 0.78) linear-gradient(0deg, rgba(151, 203, 245, 0.78) 45%,
-    rgba(113, 176, 212, 0.78));
+    background: var(--header-color);
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
     box-sizing: border-box;
-    border-radius: 4px;
-    padding: 5pt;
-    margin-bottom: 40pt;
-    height: 35pt;
+    padding: 5pt var(--side-padding);
+    height: 40pt;
     width: 100%;
     display: flex;
     flex-direction: row;
     align-items: center;
+    z-index: 9;
+    position: relative;
+}
+
+.navbar-brand {
+    font-family: Titillium Web, serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 36px;
+    line-height: 55px;
+    color: var(--text-light-color);
+    min-width: 330px;
+    text-decoration: none;
 }
 
 .navbar-nav {
@@ -20,30 +31,41 @@
 }
 
 .nav-item {
-    text-decoration: underline;
     margin-left: 5pt;
-    color: #497289;
+    color: var(--text-light-color);
     font-weight: normal;
     font-size: medium;
 }
 
+a.nav-link {
+    text-decoration: none;
+}
+
 a.nav-link:link {
-    color: #497289;
+    color: var(--text-light-color);
 }
 
 a.nav-link:visited {
-    color: #497289;
+    color: var(--text-light-color);
 }
 
 a.nav-link:hover {
-    color: #2f4a59;
+    background-color: var(--button-color);
+    opacity: 90%;
+    color: var(--text-light-color);
+    transition-delay: 3ms;
 }
 
 .button_sign-out {
-    color: #497289;
+    color: var(--text-light-color);
     cursor: pointer;
-    background: unset;
-    border-radius: 0;
-    padding: 0;
-    border: none;
+}
+
+a.navbar__username {
+    font-family: Titillium Web, serif;
+    font-style: normal;
+    font-weight: normal;
+    font-size: 24px;
+    text-decoration: none;
+    margin-right: 10pt;
 }
