@@ -3,11 +3,11 @@ package db
 import (
 	"github.com/jackc/pgx"
 )
-
+import "io/ioutil"
 var db *pgx.ConnPool
 
 func init() {
-	pgxConfig, _ := pgx.ParseURI("postgres://kotyarich:1234@localhost:5432/postgres")
+	pgxConfig, _ := pgx.ParseURI("postgresql://postgres:1234@localhost:5432/postgres")
 	pgxConfig.RuntimeParams["timezone"] = "Europe/Moscow"
 	var err error
 	db, err = pgx.NewConnPool(
@@ -23,7 +23,7 @@ func init() {
 	//	panic(err)
 	//}
 	//initString := string(initSql)
-	//
+	
 	//_, err = db.Exec(initString)
 	//if err != nil {
 	//	panic(err)

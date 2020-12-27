@@ -12,6 +12,7 @@ import LoginStore from "./stores/LoginStore";
 import UserStore from "./stores/UserStore";
 import MainPage from "./pages/MainPage";
 import RegistrationPage from "./pages/RegistrationPage";
+import ThreadCreationPage from "./pages/ThreadCreationPage";
 import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import './index.css';
@@ -68,6 +69,13 @@ class App extends React.Component {
                         userStore={userStore}
                         postStore={postStore}
                         answerStore={answerStore}/>
+          }/>
+          <Route path="/create-thread/:slug" render={(props) =>
+            <ThreadCreationPage slug={props.match.params.slug}
+                                history={this.props.history}
+                                userStore={userStore}
+                                forumStore={forumStore}
+                                threadStore={threadStore}/>
           }/>
         </Switch>
       </div>

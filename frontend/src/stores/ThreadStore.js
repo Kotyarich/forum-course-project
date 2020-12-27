@@ -1,12 +1,34 @@
 import {observable, runInAction} from 'mobx'
+import GenericFormStore from './GenericFormStore'
 import ThreadService from "../services/ThreadService";
 import ForumService from "../services/ForumService";
 
-class ThreadStore {
+class ThreadStore extends GenericFormStore  {
   constructor() {
+    super();
     this.threadService = new ThreadService();
     this.forumService = new ForumService();
   }
+
+  @observable
+  form = {
+    fields: {
+      threadname: {
+        value: '',
+        error: null,
+        rule: 'required'
+      },
+      initialpost: {
+        value: '',
+        error: null,
+        rule: 'required'
+      },
+    },
+    meta: {
+      isValid: true,
+      error: null,
+    },
+  };
 
   @observable
   status = 'initial';
@@ -55,6 +77,24 @@ class ThreadStore {
       })
     }
   };
+
+  createThread = async (forum_slug, author) => {
+    try {
+      await this.forumService.createThread({
+         author: author,
+         created: "2017-01-01T00:00:00.000Z",
+         message: this.form.fields.initialpost.value,
+         title: this.form.fields.threadname.value
+      },
+      forum_slug
+      );
+    } catch (error) {
+      runInAction(() => {
+        this.status = 'error';
+      })
+    }
+  };
+
 }
 
 export default ThreadStore;

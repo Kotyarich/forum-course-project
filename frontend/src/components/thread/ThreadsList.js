@@ -14,7 +14,7 @@ const ThreadsList = (props) => {
         <div className={'threads-list__header__threads threads__header'}>
           {'Thread'}
         </div>
-        <Link to={'/create-thread'} className={'thread-creation button'}>
+        <Link to={'/create-thread/'+props.slug} className={'thread-creation button'}>
           {'Create new thread'}
         </Link>
       </div>

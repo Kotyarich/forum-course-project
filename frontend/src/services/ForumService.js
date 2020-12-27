@@ -28,6 +28,28 @@ class ForumService {
     const response = await fetch(request);
     return response.json();
   };
+
+  createThread = async (thread, forum_slug) => {
+    const url = baseUrl + "/" + forum_slug + "/create";
+
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+
+    const options = {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: JSON.stringify({
+        author: thread.author,
+        created: thread.created,
+        message: thread.message,
+        title: thread.title,
+      })
+    };
+
+    const request = new Request(url, options);
+    return await fetch(request);
+  };
 }
 
 export default ForumService;

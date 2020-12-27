@@ -82,3 +82,4 @@ fabric.properties
 .idea/
 
 frontend/node_modules
+frontend/package-lock.json

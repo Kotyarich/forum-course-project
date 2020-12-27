@@ -38,7 +38,8 @@ class ForumPage extends React.Component {
     console.log(this.props.userStore.currentUser);
     return (
       <div className={'threads-page'}>
-        <ThreadsList threads={threads}
+        <ThreadsList slug={this.props.slug}
+                     threads={threads}
                      user={this.props.userStore.currentUser}
                      onClick={this.onRatingChange}/>
         <ReactPaginate pageCount={pageCount}
