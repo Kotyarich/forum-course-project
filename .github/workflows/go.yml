@@ -1,0 +1,40 @@
+name: Go
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Build auth service
+      run: go build -v .//...
+      
+    - name: Build Auth Service
+      run: cd auth-service && go get -d ./... && go build cmd/api/main.go
+
+    - name: Build User Service
+      run: cd user-service && go get -d ./... && go build cmd/api/main.go
+
+    - name: Build Post Service
+      run: cd post-service && go get -d ./... && go build cmd/api/main.go
+
+    - name: Build Thread Servcie
+      run: cd thread-service && go get -d ./... && go build cmd/api/main.go
+      
+    - name: Build Thread Servcie
+      run: cd forum-service && go get -d ./... && go build cmd/api/main.go
+
+    - name: Test
+      run: go test -v ./...
