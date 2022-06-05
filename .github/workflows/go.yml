@@ -33,5 +33,17 @@ jobs:
     - name: Build Thread Servcie
       run: cd forum-service && go get -d ./... && go build cmd/api/main.go
 
-    - name: Test
-      run: go test -v ./...
+    - name: Test Auth Service
+      run: cd auth-service && go test -v ./...
+
+    - name: Test User Service
+      run: cd user-service && go test -v ./...
+
+    - name: Test Post Service
+      run: cd post-service && go test -v ./...
+
+    - name: Test Thread Servcie
+      run: cd thread-service && go test -v ./...
+      
+    - name: Test Thread Servcie
+      run: cd forum-service && go test -v ./...
