@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:5000/';
+const baseUrl = 'http://localhost:5005/';
 
 class ThreadService {
   getAll = async (forumSlug, since = '', limit = 10, offset = 0, desc = true) => {
@@ -36,6 +36,7 @@ class ThreadService {
     const url = baseUrl + 'thread/' + threadSlug + '/vote';
 
     const headers = new Headers();
+    headers.append("content-type", 'application/json');
     const options = {
       method: 'POST',
       headers,

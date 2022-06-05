@@ -42,7 +42,9 @@
 }
 
 .post__edited {
-    margin-right: auto;
+    color: var(--text-dark-color);
+    margin-right: 20pt;
+    margin-top: 6pt;
 }
 
 .post__footer .post__answer-button {

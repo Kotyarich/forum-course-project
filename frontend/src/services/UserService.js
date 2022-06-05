@@ -1,8 +1,9 @@
-const baseUrl = 'http://localhost:5000/user/';
+const baseUrl = 'http://localhost:5001/user/';
+const baseUrlAuth = 'http://localhost:5002/user/';
 
 class UserService {
   signIn = async (user) => {
-    const url = baseUrl + 'auth';
+    const url = baseUrlAuth + 'auth';
 
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
@@ -23,7 +24,7 @@ class UserService {
   };
 
   create = async (user) => {
-    const url = baseUrl + user.nickname + '/create';
+    const url = baseUrlAuth + user.nickname + '/create';
 
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
@@ -54,7 +55,7 @@ class UserService {
   };
 
   checkAuth = async () => {
-    const url = baseUrl + 'check';
+    const url = baseUrlAuth + 'check';
     const options = {method: 'GET', credentials: 'include'};
 
     const request = new Request(url, options);
@@ -69,13 +70,13 @@ class UserService {
     headers.append('Content-Type', 'application/json');
 
     const options = {
-      method: 'POST',
+      method: 'PATCH',
       headers,
       credentials: 'include',
       body: JSON.stringify({
         about: user.about,
         email: user.email,
-        fullname: user.fullName,
+        fullname: user.fullname,
       })
     };
 
@@ -84,7 +85,7 @@ class UserService {
   };
 
   singOut = async () => {
-    const url = baseUrl + 'signout';
+    const url = baseUrlAuth + 'signout';
     const options = {method: 'GET', credentials: 'include'};
     const request = new Request(url, options);
     return await fetch(request);

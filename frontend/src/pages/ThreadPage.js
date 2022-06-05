@@ -63,7 +63,10 @@ class ThreadPage extends React.Component {
         <div className={'thread-page__header'}/>
         <div className={'thread-page'}>
           <Thread thread={thread}/>
-          <PostsList posts={posts} onAnswer={this.onAnswer}/>
+          <PostsList store={this.props.postStore}
+                     user={this.props.userStore.currentUser}
+                     posts={posts}
+                     onAnswer={this.onAnswer}/>
           <ReactPaginate pageCount={pageCount}
                          marginPagesDisplayed={1}
                          pageRangeDisplayed={4}

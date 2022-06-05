@@ -53,6 +53,25 @@ const LoggedInView = props => {
   return null;
 };
 
+const StatisticView = props => {
+  if (props.userStore.currentUser && props.userStore.currentUser.isAdmin) {
+    return (
+      <div className="nav navbar-nav">
+        <div className="nav-item">
+          <Link
+            to={`/statistic`}
+            className="nav-item navbar__username"
+          >
+            Statistic
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 @observer
 class Header extends Component {
   render() {
@@ -62,6 +81,7 @@ class Header extends Component {
           Codemate finder
         </Link>
 
+        <StatisticView userStore={this.props.userStore}/>
         <LoggedOutView currentUser={this.props.userStore.currentUser}/>
         <LoggedInView userStore={this.props.userStore}/>
       </nav>

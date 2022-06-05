@@ -1,4 +1,4 @@
-const baseUrl = 'http://localhost:5000/';
+const baseUrl = 'http://localhost:5003/';
 
 class PostService {
   getByThreadSlug = async (slug, limit = 10, sort = "flat", desc = false,
@@ -33,6 +33,22 @@ class PostService {
       ),
     };
     console.log(options);
+
+    const request = new Request(url, options);
+    const response = await fetch(request);
+    console.log(response);
+    return response.json();
+  };
+
+  change = async (id, message) => {
+    const url = baseUrl + 'post/' + id + '/details';
+    const headers = new Headers();
+    headers.append("content-type", 'application/json');
+    const options = {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({message: message}),
+    };
 
     const request = new Request(url, options);
     const response = await fetch(request);

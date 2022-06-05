@@ -7,7 +7,7 @@ const PostsList = (props) => {
   return (
     <div className={"posts-list"}>
       {props.posts.map((post) =>
-        <Post key={post.id} post={post} onAnswer={() => {
+        <Post store={props.store} user={props.user} key={post.id} post={post} onAnswer={() => {
           props.onAnswer(post.id)
         }}/>
       )}

@@ -5,6 +5,7 @@ class UserStore {
   constructor() {
     this.userService = new UserService();
     this.userService.checkAuth().then(user => {
+      console.log(user);
       if (!user.error) {
         this.currentUser = user;
       }
@@ -31,7 +32,30 @@ class UserStore {
           fullName: data.fullname,
           email: data.email,
           about: data.about,
+          isAdmin: data.isAdmin,
         };
+        this.status = 'ok'
+      });
+    } catch (error) {
+      runInAction(() => {
+        this.status = 'error';
+      })
+    }
+  };
+
+  changeUserProfile = async (user) => {
+    try {
+      const data = await this.userService.change(user);
+      runInAction(() => {
+        if (this.currentUser.nickname === data.nickname) {
+          this.currentUser = {
+            nickname: data.nickname,
+            fullName: data.fullname,
+            email: data.email,
+            about: data.about,
+            isAdmin: data.isAdmin,
+          };
+        }
         this.status = 'ok'
       });
     } catch (error) {

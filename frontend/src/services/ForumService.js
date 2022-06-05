@@ -1,4 +1,5 @@
 const baseUrl = 'http://localhost:5000/forum';
+const baseThreadUrl = 'http://localhost:5005/forum';
 
 class ForumService {
   getAll = async () => {
@@ -30,7 +31,7 @@ class ForumService {
   };
 
   createThread = async (thread, forum_slug) => {
-    const url = baseUrl + "/" + forum_slug + "/create";
+    const url = baseThreadUrl + "/" + forum_slug + "/create";
 
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
@@ -44,6 +45,7 @@ class ForumService {
         created: thread.created,
         message: thread.message,
         title: thread.title,
+        slug: forum_slug + '_' + thread.title,
       })
     };
 

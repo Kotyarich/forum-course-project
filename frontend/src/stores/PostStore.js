@@ -33,14 +33,19 @@ class PostStore {
     console.log(offset);
     const data = await this.postService
       .getByThreadSlug(slug, limit, sort, false, offset, since);
-    if (data.message) {
+    if (data !== null && data.message) {
       throw new Error(data.message);
     }
 
     runInAction(() => {
-      this.posts = data;
+      this.posts = data == null? []: data;
     });
   };
+
+  change = async (id, message) => {
+    console.log(message);
+    const _ = await this.postService.change(id, message);
+  }
 }
 
 export default PostStore;

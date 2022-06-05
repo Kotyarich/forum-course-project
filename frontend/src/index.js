@@ -24,6 +24,8 @@ import ThreadStore from "./stores/ThreadStore";
 import ThreadPage from "./pages/ThreadPage";
 import PostStore from "./stores/PostStore";
 import AnswerStore from "./stores/AnswerStore";
+import StatisticStore from "./stores/StatisticStore";
+import StatisticPage from "./pages/StatisticPage";
 
 let registrationStore = new RegistrationStore();
 let loginStore = new LoginStore();
@@ -33,6 +35,7 @@ let forumStore = new ForumStore();
 let threadStore = new ThreadStore();
 let postStore = new PostStore();
 let answerStore = new AnswerStore();
+let statisticStore = new StatisticStore();
 
 @observer
 class App extends React.Component {
@@ -76,6 +79,11 @@ class App extends React.Component {
                                 userStore={userStore}
                                 forumStore={forumStore}
                                 threadStore={threadStore}/>
+          }/>
+          <Route path="/statistic" render={(props) =>
+            <StatisticPage history={this.props.history}
+                           userStore={userStore}
+                           statisticStore={statisticStore}/>
           }/>
         </Switch>
       </div>

@@ -23,7 +23,16 @@ class UserInfo extends Component {
 
   handleSubmit(e) {
     e.preventDefault();
+
     this.setState({isChanging: false});
+    this.props.userStore.changeUserProfile({
+      nickname: this.props.form.fields.nickname.value,
+      fullname: this.props.form.fields.fullName.value,
+      email: this.props.form.fields.email.value,
+      about: this.props.form.fields.about.value,
+    })
+      .then(() => {
+      });
   }
 
   render() {
@@ -38,13 +47,13 @@ class UserInfo extends Component {
     let isCurrent = false;
     const user = this.props.userStore.currentUser;
     if (user) {
-      if (user.nickname === form.fields.nickname.value) {
+      if (user.nickname === form.fields.nickname.value || user.isAdmin) {
         isCurrent = true;
       }
     }
 
     return (
-    <div className={'profile'}>
+      <div className={'profile'}>
         <div className={'profile__title'}>Profile</div>
         <hr className={'profile__hr'}/>
         <div className={'profile__info'}>
