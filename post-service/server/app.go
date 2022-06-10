@@ -27,7 +27,7 @@ type App struct {
 
 func NewApp() *App {
 	postRepo := forumPostgres.NewPostRepository()
-	threadService := thread_service.NewThreadService("http://localhost:5005")
+	threadService := thread_service.NewThreadService("http://threads:5005")
 	producer := queue.NewProducer()
 
 	return &App{
@@ -38,7 +38,7 @@ func NewApp() *App {
 func (a *App) Run(port string) error {
 	router := echo.New()
 
-	auth := auth_service.NewAuthService("http://localhost:5002")
+	auth := auth_service.NewAuthService("http://auths:5002")
 	forumHttp.RegisterHTTPEndpoints(router, a.forumUC, auth)
 	router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000"},

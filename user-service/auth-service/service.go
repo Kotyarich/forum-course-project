@@ -4,17 +4,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sony/gobreaker"
 	"net/http"
 	"user-service/models"
 )
 
 type AuthService struct {
 	url string
+	cb  *gobreaker.CircuitBreaker
 }
 
 func NewAuthService(url string) *AuthService {
+	var st gobreaker.Settings
+	st.Name = "HTTP AUTH"
+	st.ReadyToTrip = func(counts gobreaker.Counts) bool {
+		failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+		return counts.Requests >= 3 && failureRatio >= 0.6
+	}
+
 	return &AuthService{
 		url: url,
+		cb:  gobreaker.NewCircuitBreaker(st),
 	}
 }
 

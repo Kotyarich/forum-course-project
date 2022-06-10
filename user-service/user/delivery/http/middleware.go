@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"log"
 	"net/http"
 	"time"
 	"user-service/models"
 	"user-service/user"
 )
 
-const authUrl = "http://localhost:5001"
+const authUrl = "http://auths:5002"
 
 func checkAuth(_ context.Context, token string) (*models.User, error) {
 	url := fmt.Sprintf("%s/user/check", authUrl)
@@ -49,9 +50,12 @@ func AuthMiddleware(f echo.HandlerFunc, _ user.UseCase) echo.HandlerFunc {
 		}
 
 		u, err := checkAuth(c.Request().Context(), cookie.Value)
+		log.Println("checked")
 		if err != nil {
+			log.Println(err)
 			c.SetRequest(c.Request().WithContext(context.WithValue(ctx, "user", nil)))
 		} else {
+			log.Println(u.Nickname)
 			c.SetRequest(c.Request().WithContext(context.WithValue(ctx, "user", u)))
 		}
 

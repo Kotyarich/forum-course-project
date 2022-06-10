@@ -35,7 +35,7 @@ func NewApp() *App {
 func (a *App) Run(port string) error {
 	router := echo.New()
 
-	auth := auth_service.NewAuthService("http://localhost:5002/")
+	auth := auth_service.NewAuthService("http://auths:5002/")
 	forumHttp.RegisterHTTPEndpoints(router, a.forumUC, auth)
 	router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"http://localhost:3000"},

@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"log"
 	"net/http"
 	"statistic-service/models"
 	"statistic-service/statistic"
 	"time"
 )
 
-const authUrl = "http://localhost:5002"
+const authUrl = "http://auths:5002"
 
 // Информация о пользователе
 // swagger:model User
@@ -90,13 +91,16 @@ func AuthMiddleware(f echo.HandlerFunc, _ statistic.UseCase) echo.HandlerFunc {
 
 		if err != nil {
 			c.SetRequest(c.Request().WithContext(context.WithValue(ctx, "user", nil)))
+			log.Println("user is nil")
 			return f(c)
 		}
 
 		u, err := checkAuth(c.Request().Context(), cookie.Value)
 		if err != nil || !u.IsAdmin {
+			log.Println("user is nil or not admin")
 			c.SetRequest(c.Request().WithContext(context.WithValue(ctx, "user", nil)))
 		} else {
+			log.Println("user is admin")
 			c.SetRequest(c.Request().WithContext(context.WithValue(ctx, "user", u)))
 		}
 

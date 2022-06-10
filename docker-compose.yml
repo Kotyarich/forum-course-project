@@ -1,0 +1,199 @@
+version: "3.7"
+services:
+  queue:
+    image: rabbitmq:3-management-alpine
+    container_name: 'rabbitmq'
+    environment:
+      - RABBITMQ_FORCE_BOOT=yes
+    ports:
+        - 5672:5672
+        - 15672:15672
+    networks:
+        - common
+  databasestat:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=kotyarich
+      - POSTGRES_DB=postgres
+    ports:
+      - "5431:5432"
+    volumes:
+      - ./statistic-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - statistic
+  statistics:
+    build:
+      context: ./statistic-service
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - databasestat
+      - queue
+    networks:
+      - common
+      - statistic
+    ports:
+      - "5010:5010"
+
+  databasepost:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=kotyarich
+      - POSTGRES_DB=postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./post-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - posts
+  posts:
+    build:
+      context: ./post-service
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - databasepost
+      - queue
+    networks:
+      - common
+      - posts
+    ports:
+      - "5003:5003"
+
+  databaseuser:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=kotyarich
+      - POSTGRES_DB=postgres
+    ports:
+      - "5430:5432"
+    volumes:
+      - ./user-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - users
+  users:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - databaseuser
+      - queue
+    networks:
+      - common
+      - users
+    ports:
+      - "5001:5001"
+
+  databaseforum:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=kotyarich
+      - POSTGRES_DB=postgres
+    ports:
+      - "5429:5432"
+    volumes:
+      - ./forum-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - forums
+  forums:
+    build:
+      context: ./forum-service
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - databaseforum
+      - queue
+    networks:
+      - common
+      - forums
+    ports:
+      - "5000:5000"
+
+  databasethread:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=kotyarich
+      - POSTGRES_DB=postgres
+    ports:
+      - "5428:5432"
+    volumes:
+      - ./thread-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - threads
+  threads:
+    build:
+      context: ./thread-service
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - databasethread
+      - queue
+    networks:
+      - common
+      - threads
+    ports:
+      - "5005:5005"
+
+  databaseauth:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_PASSWORD=1234
+      - POSTGRES_USER=kotyarich
+      - POSTGRES_DB=postgres
+    ports:
+      - "5427:5432"
+    volumes:
+      - ./auth-service/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - auths
+  auths:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - databaseauth
+      - queue
+    networks:
+      - common
+      - auths
+    ports:
+      - "5002:5002"
+
+  app:
+    container_name: app
+    image: app
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:8080"
+
+networks:
+  common:
+    driver: bridge
+  statistic:
+    driver: bridge
+  posts:
+    driver: bridge
+  users:
+    driver: bridge
+  forums:
+    driver: bridge
+  threads:
+    driver: bridge
+  auths:
+    driver: bridge

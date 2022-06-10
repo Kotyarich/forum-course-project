@@ -57,17 +57,18 @@ func (a *App) Run(port string) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
+
+	conn, err := amqp.Dial("amqp://guest:guest@queue:5672/")
+	if err != nil {
+		return fmt.Errorf("%v: failed to connect to RabbitMQ", err)
+	}
+	defer func() { _ = conn.Close() }()
+
 	go func() {
 		if err := a.httpServer.ListenAndServe(); err != nil {
 			log.Fatalf("Failed to listen and serve: %+v", err)
 		}
 	}()
-
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		return fmt.Errorf("%v: failed to connect to RabbitMQ", err)
-	}
-	defer func() { _ = conn.Close() }()
 
 	ch, err := conn.Channel()
 	if err != nil {
@@ -99,15 +100,14 @@ func (a *App) Run(port string) error {
 			_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
 		}
 	}()
-	go func() {
-		err := a.RunQueueForumConsumers(ch)
-		if err != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "%s", err.Error())
-		}
-	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Interrupt)
+
+	err = a.RunQueueForumConsumers(ch)
+	if err != nil {
+		return err
+	}
 
 	<-quit
 
@@ -144,7 +144,7 @@ func (a *App) RunQueuePostConsumers(ch *amqp.Channel) error {
 	}
 
 	forever := make(chan bool)
-
+	fmt.Println("post consumer ready")
 	go func() {
 		for d := range msgs {
 			err = a.queueHandler.HandlePostCreation(context.Background(), string(d.Body))
@@ -185,7 +185,7 @@ func (a *App) RunQueueUserConsumers(ch *amqp.Channel) error {
 	}
 
 	forever := make(chan bool)
-
+	fmt.Println("user consumer ready")
 	go func() {
 		for d := range msgs {
 			err = a.queueHandler.HandleUserCreation(context.Background(), string(d.Body))
@@ -226,7 +226,7 @@ func (a *App) RunQueueVoteConsumers(ch *amqp.Channel) error {
 	}
 
 	forever := make(chan bool)
-
+	fmt.Println("vote consumer ready")
 	go func() {
 		for d := range msgs {
 			err = a.queueHandler.HandleVoteCreation(context.Background(), string(d.Body))
@@ -267,7 +267,7 @@ func (a *App) RunQueueThreadConsumers(ch *amqp.Channel) error {
 	}
 
 	forever := make(chan bool)
-
+	fmt.Println("thread consumer ready")
 	go func() {
 		for d := range msgs {
 			err = a.queueHandler.HandleThreadCreation(context.Background(), string(d.Body))

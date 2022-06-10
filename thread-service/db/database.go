@@ -7,7 +7,7 @@ import (
 var db *pgx.ConnPool
 
 func init() {
-	pgxConfig, _ := pgx.ParseURI("postgresql://kotyarich:1234@localhost:5432/postgres")
+	pgxConfig, _ := pgx.ParseURI("postgresql://kotyarich:1234@databasethread:5432/postgres")
 	pgxConfig.RuntimeParams["timezone"] = "Europe/Moscow"
 	var err error
 	db, err = pgx.NewConnPool(

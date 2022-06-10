@@ -13,4 +13,5 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rabbitmq/amqp091-go v1.3.4
 	github.com/shopspring/decimal v1.3.1 // indirect
+	github.com/sony/gobreaker v0.5.0
 )

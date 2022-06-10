@@ -5,17 +5,27 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sony/gobreaker"
 	"net/http"
 	"user-service/models"
 )
 
 type UserService struct {
 	url string
+	cb  *gobreaker.CircuitBreaker
 }
 
 func NewUserService(url string) *UserService {
+	var st gobreaker.Settings
+	st.Name = "HTTP AUTH"
+	st.ReadyToTrip = func(counts gobreaker.Counts) bool {
+		failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+		return counts.Requests >= 3 && failureRatio >= 0.6
+	}
+
 	return &UserService{
 		url: url,
+		cb:  gobreaker.NewCircuitBreaker(st),
 	}
 }
 
@@ -76,7 +86,11 @@ func usersInputToArray(users []userInput) []*models.User {
 
 func (s *UserService) CheckAuth(ctx context.Context, username string, password string) (*models.User, error) {
 	url := fmt.Sprintf("%suser/check?username=%s&password=%s", s.url, username, password)
-	resp, err := http.Get(url)
+	respI, err := s.cb.Execute(func() (interface{}, error) {
+		resp, err := http.Get(url)
+		return resp, err
+	})
+	resp := respI.(*http.Response)
 	if err != nil {
 		return nil, err
 	}
@@ -96,13 +110,17 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) (*model
 	url := fmt.Sprintf("%suser/%s/create", s.url, user.Nickname)
 
 	jsonString, _ := json.Marshal(user)
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
-	req.Header.Add("content-type", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	respI, err := s.cb.Execute(func() (interface{}, error) {
+		req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonString))
+		req.Header.Add("content-type", "application/json")
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		return resp, err
+	})
 	if err != nil {
 		return nil, nil, err
 	}
+	resp := respI.(*http.Response)
 
 	defer func() { _ = resp.Body.Close() }()
 
@@ -125,10 +143,14 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) (*model
 
 func (s *UserService) GetUser(ctx context.Context, username string) (*models.User, error) {
 	url := fmt.Sprintf("%suser/%s/profile", s.url, username)
-	resp, err := http.Get(url)
+	respI, err := s.cb.Execute(func() (interface{}, error) {
+		resp, err := http.Get(url)
+		return resp, err
+	})
 	if err != nil {
 		return nil, err
 	}
+	resp := respI.(*http.Response)
 
 	defer func() { _ = resp.Body.Close() }()
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"log"
 	"net/http"
 	"time"
 	"user-service/models"
@@ -66,7 +67,7 @@ func userInputToModel(user userInput) *models.User {
 	}
 }
 
-func (s *Handler) checkAuth(token string) (*models.User, error) {
+func (h *Handler) checkAuth(token string) (*models.User, error) {
 	url := fmt.Sprintf("%suser/check", "http://localhost:5002/")
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -125,13 +126,13 @@ func (h *Handler) UserGetHandler(c echo.Context) error {
 func (h *Handler) UserPostHandler(c echo.Context) error {
 	nickname := c.Param("nickname")
 
-	cookie, err := c.Cookie("Auth")
-	if err != nil {
-		return c.String(http.StatusForbidden, "forbidden")
+	u := c.Request().Context().Value("user")
+	if u == nil {
+		log.Println("nil")
+	} else {
+		log.Println("user:", u.(*models.User).Nickname)
 	}
-
-	u, err := h.checkAuth(cookie.Value)
-	if err != nil && u == nil || (u.Nickname != nickname && !u.IsAdmin) {
+	if u == nil || (u.(*models.User).Nickname != nickname && !u.(*models.User).IsAdmin) {
 		return c.String(http.StatusForbidden, "forbidden")
 	}
 

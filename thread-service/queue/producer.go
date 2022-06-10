@@ -15,7 +15,7 @@ type Producer struct {
 func NewProducer() *Producer {
 	var p Producer
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@queue:5672/")
 	p.failOnError(err, "Failed to connect to RabbitMQ")
 
 	ch, err := conn.Channel()

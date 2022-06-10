@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/labstack/echo/v4"
+	"log"
 	"net/http"
 	"os"
 	"statistic-service/models"
@@ -43,10 +44,12 @@ func (h *Handler) GetHandler(c echo.Context) error {
 	}
 
 	status, err := h.useCase.GetStatistic(c.Request().Context())
+	log.Println("status gotten")
 	if err != nil {
+		log.Println("err")
 		_, _ = fmt.Fprintf(os.Stderr, "gettting statistic error: %s", err.Error())
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
-
+	log.Println("OK")
 	return c.JSON(http.StatusOK, statisticModelToOutput(*status))
 }

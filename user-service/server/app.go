@@ -41,7 +41,7 @@ func (a *App) Run(port string) error {
 
 	userHttp.RegisterHTTPEndpoints(router, a.userUC)
 	router.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"http://localhost:3000", "http://localhost:5002"},
+		AllowOrigins: []string{"http://localhost:3000", "http://auths:5002"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
 		AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete},
 		AllowCredentials: true,

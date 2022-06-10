@@ -1,6 +1,7 @@
 package queue
 
 import (
+	"fmt"
 	"log"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -14,7 +15,7 @@ type Producer struct {
 func NewProducer() *Producer {
 	var p Producer
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial("amqp://guest:guest@queue:5672/")
 	p.failOnError(err, "Failed to connect to RabbitMQ")
 
 	ch, err := conn.Channel()
@@ -29,7 +30,7 @@ func NewProducer() *Producer {
 		nil,            // arguments
 	)
 	p.failOnError(err, "Failed to declare a queue")
-
+	fmt.Println("producer ready")
 	return &Producer{
 		channel: ch,
 		queue:   q,

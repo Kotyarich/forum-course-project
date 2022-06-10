@@ -4,20 +4,29 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/sony/gobreaker"
 	"net/http"
 	"statistic-service/models"
 )
 
 type AuthService struct {
 	url string
+	cb  *gobreaker.CircuitBreaker
 }
 
 func NewAuthService(url string) *AuthService {
+	var st gobreaker.Settings
+	st.Name = "HTTP AUTH"
+	st.ReadyToTrip = func(counts gobreaker.Counts) bool {
+		failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+		return counts.Requests >= 3 && failureRatio >= 0.6
+	}
+
 	return &AuthService{
 		url: url,
+		cb:  gobreaker.NewCircuitBreaker(st),
 	}
 }
-
 
 // Информация о пользователе
 // swagger:model User
@@ -25,13 +34,13 @@ type userInput struct {
 	// Описание пользователя
 	//
 	// example: This is the day you will always remember as the day that you almost caught Captain Jack Sparrow!
-	About    string `json:"about"`
+	About string `json:"about"`
 
 	// Почтовый адрес пользователя
 	//
 	// format: email
 	// example: captaina@blackpearl.sea
-	Email    string `json:"email"`
+	Email string `json:"email"`
 
 	// Полное имя пользователя
 	//
@@ -75,20 +84,24 @@ func (s *AuthService) CheckAuth(ctx context.Context, token string) (*models.User
 	url := fmt.Sprintf("%s/user/check", s.url)
 	bearer := "Bearer " + token
 
-	req, err := http.NewRequest("GET", url, nil)
+	resp, err := s.cb.Execute(func() (interface{}, error) {
+		req, err := http.NewRequest("GET", url, nil)
 
-	req.Header.Add("Authorization", bearer)
+		req.Header.Add("Authorization", bearer)
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		return resp, err
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() {_ = resp.Body.Close()}()
+	defer func() { _ = resp.(*http.Response).Body.Close() }()
 
 	var user userInput
-	err = json.NewDecoder(resp.Body).Decode(&user)
+	err = json.NewDecoder(resp.(*http.Response).Body).Decode(&user)
 	if err != nil {
 		return nil, err
 	}

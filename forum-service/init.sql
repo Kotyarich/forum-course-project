@@ -10,7 +10,7 @@ CREATE TABLE forums
   slug    CITEXT UNIQUE NOT NULL,
   threads INT           NOT NULL DEFAULT 0,
   title   TEXT          NOT NULL,
-  author  CITEXT        NOT NULL REFERENCES users (nickname)
+  author  CITEXT        NOT NULL 
 );
 
 CREATE INDEX IF NOT EXISTS forums_slug ON forums USING hash (slug);

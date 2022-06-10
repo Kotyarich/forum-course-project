@@ -21,7 +21,7 @@ type App struct {
 	userUC auth.UseCase
 }
 
-const userServiceUrl = "http://localhost:5001/"
+const userServiceUrl = "http://users:5001/"
 
 func NewApp() *App {
 	userService := user_service.NewUserService(userServiceUrl)

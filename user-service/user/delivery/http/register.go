@@ -110,5 +110,5 @@ func RegisterHTTPEndpoints(router *echo.Echo, uc user.UseCase) {
 	//       $ref: '#/responses/Error'
 	router.PATCH("/user/:nickname/profile",
 		common.CORSMiddlware(
-			handler.UserPostHandler))
+			AuthMiddleware(handler.UserPostHandler, uc)))
 }

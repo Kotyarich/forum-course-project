@@ -28,7 +28,7 @@ CREATE TABLE forums
   slug    CITEXT UNIQUE NOT NULL,
   threads INT           NOT NULL DEFAULT 0,
   title   TEXT          NOT NULL,
-  author  CITEXT        NOT NULL REFERENCES users (nickname)
+  author  CITEXT        NOT NULL 
 );
 
 CREATE INDEX IF NOT EXISTS forums_slug ON forums USING hash (slug);
@@ -44,9 +44,9 @@ CREATE INDEX IF NOT EXISTS forum_users_fuser ON forum_users (fUser);
 
 CREATE TABLE threads
 (
-  author  CITEXT    NOT NULL REFERENCES users (nickname),
+  author  CITEXT    NOT NULL,
   created TIMESTAMP NOT NULL DEFAULT NOW(),
-  forum   CITEXT    NOT NULL REFERENCES forums (slug) ON DELETE CASCADE,
+  forum   CITEXT    NOT NULL,
   id      SERIAL PRIMARY KEY,
   message TEXT      NOT NULL,
   slug    CITEXT UNIQUE,
@@ -62,13 +62,13 @@ CREATE INDEX IF NOT EXISTS threads_forum_created ON threads (forum, created);
 CREATE TABLE posts
 (
   id       SERIAL PRIMARY KEY,
-  author   CITEXT    NOT NULL REFERENCES users (nickname),
+  author   CITEXT    NOT NULL,
   created  TIMESTAMP DEFAULT '1970-01-01 00:00:00',
   forum    CITEXT    NOT NULL,
   isEdited BOOLEAN   DEFAULT FALSE,
   message  TEXT      NOT NULL,
   parent   INT       DEFAULT 0,
-  tid      INT       NOT NULL REFERENCES threads (id) ON DELETE CASCADE,
+  tid      INT       NOT NULL,
   slug     INTEGER[] NOT NULL,
   rootId   INT
 );
@@ -82,7 +82,7 @@ CREATE INDEX IF NOT EXISTS posts_slug ON posts (slug);
 
 CREATE TABLE votes
 (
-  nickname CITEXT NOT NULL REFERENCES users (nickname),
+  nickname CITEXT NOT NULL,
   tid      INT    NOT NULL,
   voice    INT    NOT NULL
 );

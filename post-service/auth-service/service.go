@@ -3,6 +3,7 @@ package auth_service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/sony/gobreaker"
 	"net/http"
 	"post-service/models"
 	"time"
@@ -12,14 +13,22 @@ const CoockieName = "Auth"
 
 type AuthService struct {
 	url string
+	cb  *gobreaker.CircuitBreaker
 }
 
 func NewAuthService(url string) *AuthService {
+	var st gobreaker.Settings
+	st.Name = "HTTP AUTH"
+	st.ReadyToTrip = func(counts gobreaker.Counts) bool {
+		failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
+		return counts.Requests >= 3 && failureRatio >= 0.6
+	}
+
 	return &AuthService{
 		url: url,
+		cb:  gobreaker.NewCircuitBreaker(st),
 	}
 }
-
 
 // Информация о пользователе
 // swagger:model User
@@ -27,13 +36,13 @@ type userInput struct {
 	// Описание пользователя
 	//
 	// example: This is the day you will always remember as the day that you almost caught Captain Jack Sparrow!
-	About    string `json:"about"`
+	About string `json:"about"`
 
 	// Почтовый адрес пользователя
 	//
 	// format: email
 	// example: captaina@blackpearl.sea
-	Email    string `json:"email"`
+	Email string `json:"email"`
 
 	// Полное имя пользователя
 	//
@@ -66,17 +75,21 @@ func userInputToModel(user userInput) *models.User {
 func (s *AuthService) CheckAuth(token string) (*models.User, error) {
 	url := fmt.Sprintf("%suser/check", s.url)
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	req.Header.Add("content-type", "application/json")
-	req.AddCookie(&http.Cookie{Name: CoockieName, Value: token, Expires: time.Now().Add(time.Hour)})
+	respI, err := s.cb.Execute(func() (interface{}, error) {
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		req.Header.Add("content-type", "application/json")
+		req.AddCookie(&http.Cookie{Name: CoockieName, Value: token, Expires: time.Now().Add(time.Hour)})
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		return resp, err
+	})
+	resp := respI.(*http.Response)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() {_ = resp.Body.Close()}()
+	defer func() { _ = resp.Body.Close() }()
 
 	var user userInput
 	err = json.NewDecoder(resp.Body).Decode(&user)
